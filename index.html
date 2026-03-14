@@ -635,7 +635,8 @@ var currentSource = 'Salon';
 
 function loadHistory()  { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; } }
 function saveHistory(h) { localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); }
-function loadUrl()      { return localStorage.getItem(URL_KEY) || ''; }
+var DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwXFkjZ0smUEpI-FwrJak4_UQIOBnGBdqHFFL8vVJzFGv4EDXSRoS-kKiFs68xgeQy7/exec';
+function loadUrl()      { return localStorage.getItem(URL_KEY) || DEFAULT_URL; }
 function saveUrl(u)     { localStorage.setItem(URL_KEY, u); }
 function getOpt(key)    { return localStorage.getItem(key) === 'true'; }
 function setOpt(key, v) { localStorage.setItem(key, v ? 'true' : 'false'); }
