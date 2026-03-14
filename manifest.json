@@ -1,0 +1,24 @@
+{
+  "name": "Nova Leadership - Capture Contact",
+  "short_name": "NV Capture",
+  "description": "Capturez vos contacts à chaud",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF5F5",
+  "theme_color": "#F16B6B",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

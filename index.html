@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="NV Capture">
+  <meta name="theme-color" content="#F16B6B">
+  <link rel="manifest" href="manifest.json">
+  <title>Nova Leadership - Capture Contact</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --coral:   #F16B6B;
+      --coral-d: #e05555;
+      --dark:    #2D2D2D;
+      --bg:      #FFF5F5;
+      --card:    #ffffff;
+      --text:    #2D2D2D;
+      --muted:   #888888;
+      --border:  #F0DADA;
+      --radius:  16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      padding: 14px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 12px rgba(241,107,107,0.12);
+      border-bottom: 2px solid var(--coral);
+    }
+    .logo {
+      width: 44px; height: 44px;
+      background: var(--coral);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-weight: 900; font-size: 0.9rem;
+      color: white; letter-spacing: -0.5px;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 800; color: var(--dark); flex: 1; }
+    header p  { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* Settings gear button */
+    #btn-config {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 1.3rem; padding: 4px;
+    }
+
+    /* Settings drawer */
+    #settings-drawer {
+      background: #FFF0F0;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      display: none;
+    }
+    #settings-drawer.open { display: block; }
+    .settings-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .settings-row:last-child { margin-bottom: 0; }
+    .settings-label {
+      flex: 1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    .settings-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 1px;
+    }
+
+    /* URL input row */
+    .url-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .url-row label { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+    #webapp-url {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      color: var(--dark);
+      background: #fff;
+      outline: none;
+      font-family: inherit;
+    }
+    #webapp-url:focus { border-color: var(--coral); }
+    #btn-save-url {
+      background: var(--coral); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.8rem;
+      font-weight: 700; cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* Toggle switch */
+    .toggle {
+      position: relative;
+      width: 46px; height: 26px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: #ddd; border-radius: 99px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle input:checked + .toggle-slider { background: var(--coral); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Main */
+    main { padding: 16px; max-width: 540px; margin: 0 auto; }
+
+    /* Config warning */
+    #config-warning {
+      background: #fff8e1;
+      border: 1px solid #ffcc02;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 0.8rem;
+      color: #7a5000;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ead8d8;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      flex: 1; text-align: center;
+      padding: 9px 6px; border-radius: 7px;
+      font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; color: var(--muted);
+      transition: all 0.15s; user-select: none;
+    }
+    .tab.active { background: var(--coral); color: #fff; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 0.68rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 14px;
+    }
+
+    /* Fields */
+    .fields { display: flex; flex-direction: column; gap: 12px; }
+    .field  { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 0.74rem; font-weight: 700; color: var(--muted); }
+
+    .field input[type="text"],
+    .field input[type="email"],
+    .field input[type="tel"],
+    .field select,
+    .field textarea {
+      display: block; width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 11px 13px;
+      font-size: 16px; font-family: inherit;
+      color: var(--text); background: #fff;
+      outline: none; transition: border 0.18s;
+      appearance: none; -webkit-appearance: none;
+    }
+    .field input[type="text"]:focus,
+    .field input[type="email"]:focus,
+    .field input[type="tel"]:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px rgba(241,107,107,0.12);
+    }
+    .field textarea { resize: none; min-height: 80px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Pills */
+    .pills { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pill {
+      padding: 7px 13px; border-radius: 99px;
+      border: 1.5px solid var(--border);
+      font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; background: #fff;
+      color: var(--muted); transition: all 0.15s;
+      user-select: none;
+    }
+    .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
+
+    /* Send options card */
+    #send-options-card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 14px;
+    }
+    .send-option-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 0;
+    }
+    .send-option-row + .send-option-row {
+      border-top: 1px solid var(--border);
+    }
+    .send-option-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .icon-email { background: #fde8e8; }
+    .icon-sms   { background: #e8f0fe; }
+    .send-option-info { flex: 1; }
+    .send-option-label { font-size: 0.85rem; font-weight: 700; color: var(--dark); }
+    .send-option-sub   { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+
+    /* Submit */
+    #btn-submit {
+      width: 100%; background: var(--coral);
+      color: #fff; border: none; border-radius: 99px;
+      padding: 15px; font-size: 1rem; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 8px; margin-top: 4px;
+      transition: background 0.18s; font-family: inherit;
+    }
+    #btn-submit:active   { background: var(--coral-d); }
+    #btn-submit:disabled { background: #f5a5a5; cursor: default; }
+    #btn-submit.loading .btn-label { display: none; }
+    #btn-submit.loading::after {
+      content: ''; width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success panel */
+    #success-panel { display: none; flex-direction: column; gap: 12px; }
+
+    .success-banner {
+      background: var(--coral); border-radius: 16px;
+      padding: 18px 20px; display: flex;
+      align-items: center; gap: 14px;
+    }
+    .success-icon {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 1.3rem; color: white; font-weight: 700;
+    }
+    .success-name { font-size: 1rem; font-weight: 800; color: #fff; }
+    .success-sub  { font-size: 0.78rem; color: rgba(255,255,255,0.85); margin-top: 3px; }
+
+    /* Action buttons */
+    .action-title {
+      font-size: 0.68rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .action-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+    .btn-action {
+      width: 100%; border: none; border-radius: 12px;
+      padding: 14px 18px; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center;
+      gap: 12px; text-decoration: none; transition: opacity 0.15s;
+      font-family: inherit;
+    }
+    .btn-action:active { opacity: 0.8; }
+    .btn-action-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 1.2rem;
+    }
+    .btn-action-text { text-align: left; }
+    .btn-action-label { display: block; font-size: 0.95rem; font-weight: 700; }
+    .btn-action-sub   { display: block; font-size: 0.72rem; font-weight: 500; opacity: 0.65; margin-top: 1px; }
+
+    .btn-email { background: #fff; color: var(--dark); box-shadow: 0 1px 6px rgba(241,107,107,0.15); }
+    .btn-email .btn-action-icon { background: #fde8e8; }
+    .btn-sms   { background: var(--coral); color: #fff; }
+    .btn-sms .btn-action-icon { background: rgba(255,255,255,0.2); }
+
+    .btn-action.btn-auto {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-auto-badge {
+      position: absolute; top: 8px; right: 10px;
+      background: rgba(255,255,255,0.3);
+      color: white; font-size: 0.6rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 99px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .btn-email .btn-auto-badge { background: #fde8e8; color: var(--coral); }
+
+    .btn-action.btn-pending {
+      border: 2px dashed var(--coral);
+      background: #fff8f8;
+      color: var(--coral);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    .btn-disabled { opacity: 0.35; pointer-events: none; }
+
+    #btn-new-contact {
+      background: transparent; color: var(--coral);
+      font-size: 0.85rem; font-weight: 700;
+      border: 1.5px solid var(--coral); border-radius: 99px;
+      padding: 12px; width: 100%; cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--dark); color: #fff;
+      padding: 12px 22px; border-radius: 99px;
+      font-size: 0.85rem; font-weight: 600;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      white-space: nowrap; z-index: 100;
+      max-width: 90vw; text-align: center;
+    }
+    #toast.show    { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { background: #16a34a; }
+    #toast.error   { background: var(--coral-d); }
+
+    /* History */
+    .hist-item {
+      background: var(--bg); border-radius: 10px;
+      padding: 11px 13px; display: flex;
+      align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .hist-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--coral); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
+    }
+    .hist-info { flex: 1; min-width: 0; }
+    .hist-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-sub  { font-size: 0.73rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-badge {
+      font-size: 0.65rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 99px;
+      background: #dcfce7; color: #166534; flex-shrink: 0;
+    }
+    .hist-badge.pending { background: #fef9c3; color: #a16207; }
+    .hist-badge.error   { background: #fee2e2; color: #dc2626; }
+    #empty-history { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px 0; }
+
+    #btn-retry {
+      width: 100%; background: #f4f4f4;
+      color: var(--dark); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 13px;
+      font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: none; margin-top: 4px;
+    }
+
+    /* Install banner */
+    #install-banner {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    #install-banner span { flex: 1; font-size: 0.8rem; color: var(--dark); }
+    #btn-install {
+      background: var(--coral); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.78rem;
+      font-weight: 700; cursor: pointer;
+      font-family: inherit;
+    }
+    #btn-install-close {
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 1rem; padding: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NV</div>
+  <div style="flex:1">
+    <h1>Nova Leadership</h1>
+    <p>Capture de contact</p>
+  </div>
+  <button id="btn-config" title="Parametres">&#9881;</button>
+</header>
+
+<div id="settings-drawer">
+  <div class="url-row">
+    <label>Apps Script :</label>
+    <input id="webapp-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+    <button id="btn-save-url">OK</button>
+  </div>
+  <div class="settings-row">
+    <div class="send-option-icon icon-email">&#9993;</div>
+    <div class="settings-label">
+      Email automatique
+      <span class="settings-sub">Ouvre Mail apres enregistrement</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="opt-email">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <div class="send-option-icon icon-sms">&#128172;</div>
+    <div class="settings-label">
+      SMS automatique
+      <span class="settings-sub">Ouvre Messages apres enregistrement</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="opt-sms">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+</div>
+
+<main>
+
+  <div id="config-warning">Configurez l'URL Google Apps Script dans les parametres (icone en haut a droite).</div>
+
+  <div id="install-banner">
+    <span>Installez l'app sur votre iPhone pour un acces rapide</span>
+    <button id="btn-install-close">&#10005;</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="form">Nouveau contact</div>
+    <div class="tab" data-tab="history">Historique</div>
+  </div>
+
+  <!-- FORM TAB -->
+  <div class="tab-pane active" id="tab-form">
+
+    <div id="form-section">
+      <div class="card">
+        <div class="card-title">Informations du contact</div>
+        <div class="fields">
+          <div class="row">
+            <div class="field">
+              <label for="f-first">Prenom *</label>
+              <input type="text" id="f-first" placeholder="Jean" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field">
+              <label for="f-last">Nom *</label>
+              <input type="text" id="f-last" placeholder="Dupont" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-email">Email</label>
+            <input type="email" id="f-email" placeholder="jean@exemple.com" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="f-phone">Telephone</label>
+            <input type="tel" id="f-phone" placeholder="06 00 00 00 00" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="f-company">Entreprise</label>
+            <input type="text" id="f-company" placeholder="Acme Corp" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="f-role">Poste</label>
+            <input type="text" id="f-role" placeholder="Directeur Commercial" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Contexte</div>
+        <div class="fields">
+          <div class="field">
+            <label>Source</label>
+            <div class="pills" id="source-pills">
+              <div class="pill active" data-value="Salon">Salon</div>
+              <div class="pill" data-value="Conference">Conference</div>
+              <div class="pill" data-value="Reseau">Reseau</div>
+              <div class="pill" data-value="Reference">Reference</div>
+              <div class="pill" data-value="LinkedIn">LinkedIn</div>
+              <div class="pill" data-value="Autre">Autre</div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-priority">Interet</label>
+            <select id="f-priority">
+              <option value="Chaud">Chaud</option>
+              <option value="Tiede">Tiede</option>
+              <option value="Froid">Froid</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-notes">Notes</label>
+            <textarea id="f-notes" placeholder="Besoins, projet, prochaine etape..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options d'envoi -->
+      <div id="send-options-card">
+        <div class="card-title" style="margin-bottom:8px">Envoyer apres enregistrement</div>
+        <div class="send-option-row">
+          <div class="send-option-icon icon-email">&#9993;</div>
+          <div class="send-option-info">
+            <div class="send-option-label">Email</div>
+            <div class="send-option-sub">Ouvre Mail avec message pre-rempli</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="form-opt-email">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="send-option-row">
+          <div class="send-option-icon icon-sms">&#128172;</div>
+          <div class="send-option-info">
+            <div class="send-option-label">SMS</div>
+            <div class="send-option-sub">Ouvre Messages avec coordonnees</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="form-opt-sms">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <button id="btn-submit">
+        <span class="btn-label">Enregistrer le contact</span>
+      </button>
+    </div>
+
+    <!-- Success panel -->
+    <div id="success-panel">
+      <div class="success-banner">
+        <div class="success-icon">&#10003;</div>
+        <div>
+          <div class="success-name" id="sp-name"></div>
+          <div class="success-sub" id="sp-sub"></div>
+        </div>
+      </div>
+
+      <div class="card" id="action-card">
+        <div class="action-title">Actions</div>
+        <div class="action-buttons" id="action-buttons"></div>
+      </div>
+
+      <button id="btn-new-contact">+ Nouveau contact</button>
+    </div>
+
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="tab-pane" id="tab-history">
+    <div class="card">
+      <div class="card-title">Contacts captures <span id="hist-count"></span></div>
+      <div id="history-list">
+        <div id="empty-history">Aucun contact pour l'instant.</div>
+      </div>
+    </div>
+    <button id="btn-retry">Renvoyer les contacts en attente</button>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── Config agent ─────────────────────────────────────────────
+var AGENT = {
+  name:    'Daniel Invernon',
+  company: 'Nova Leadership',
+  email:   'daniel@novaleadership.fr',
+  phone:   '06 61 42 75 36'
+};
+
+// ── Storage ──────────────────────────────────────────────────
+var STORAGE_KEY  = 'crm_history';
+var URL_KEY      = 'crm_webapp_url';
+var OPT_EMAIL    = 'opt_email';
+var OPT_SMS      = 'opt_sms';
+var currentSource = 'Salon';
+
+function loadHistory()  { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; } }
+function saveHistory(h) { localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); }
+function loadUrl()      { return localStorage.getItem(URL_KEY) || ''; }
+function saveUrl(u)     { localStorage.setItem(URL_KEY, u); }
+function getOpt(key)    { return localStorage.getItem(key) === 'true'; }
+function setOpt(key, v) { localStorage.setItem(key, v ? 'true' : 'false'); }
+
+// ── Init ─────────────────────────────────────────────────────
+document.getElementById('webapp-url').value = loadUrl();
+updateConfigWarning();
+
+// Sync toggles from storage
+document.getElementById('opt-email').checked      = getOpt(OPT_EMAIL);
+document.getElementById('opt-sms').checked        = getOpt(OPT_SMS);
+document.getElementById('form-opt-email').checked = getOpt(OPT_EMAIL);
+document.getElementById('form-opt-sms').checked   = getOpt(OPT_SMS);
+
+// Save toggle changes (settings drawer)
+document.getElementById('opt-email').addEventListener('change', function() {
+  setOpt(OPT_EMAIL, this.checked);
+  document.getElementById('form-opt-email').checked = this.checked;
+});
+document.getElementById('opt-sms').addEventListener('change', function() {
+  setOpt(OPT_SMS, this.checked);
+  document.getElementById('form-opt-sms').checked = this.checked;
+});
+// Save toggle changes (form)
+document.getElementById('form-opt-email').addEventListener('change', function() {
+  setOpt(OPT_EMAIL, this.checked);
+  document.getElementById('opt-email').checked = this.checked;
+});
+document.getElementById('form-opt-sms').addEventListener('change', function() {
+  setOpt(OPT_SMS, this.checked);
+  document.getElementById('opt-sms').checked = this.checked;
+});
+
+// Config button
+document.getElementById('btn-config').addEventListener('click', function() {
+  var d = document.getElementById('settings-drawer');
+  d.classList.toggle('open');
+});
+
+// Save URL
+document.getElementById('btn-save-url').addEventListener('click', function() {
+  var v = document.getElementById('webapp-url').value.trim();
+  saveUrl(v);
+  updateConfigWarning();
+  document.getElementById('settings-drawer').classList.remove('open');
+  showToast(v ? 'URL sauvegardee' : 'URL effacee', v ? 'success' : '');
+});
+
+function updateConfigWarning() {
+  document.getElementById('config-warning').style.display = loadUrl() ? 'none' : 'block';
+}
+
+// iOS install banner
+var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+var isStandalone = window.navigator.standalone;
+if (isIOS && !isStandalone && !localStorage.getItem('install_dismissed')) {
+  var banner = document.getElementById('install-banner');
+  banner.style.display = 'flex';
+  banner.querySelector('span').textContent = 'Installez : appuyez sur Partager puis "Sur l\'ecran d\'accueil"';
+}
+document.getElementById('btn-install-close').addEventListener('click', function() {
+  document.getElementById('install-banner').style.display = 'none';
+  localStorage.setItem('install_dismissed', '1');
+});
+
+// ── Tabs ─────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'history') renderHistory();
+  });
+});
+
+// ── Pills ─────────────────────────────────────────────────────
+document.getElementById('source-pills').addEventListener('click', function(e) {
+  var pill = e.target.closest('.pill');
+  if (!pill) return;
+  document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+  pill.classList.add('active');
+  currentSource = pill.dataset.value;
+});
+
+// ── Submit ─────────────────────────────────────────────────────
+document.getElementById('btn-submit').addEventListener('click', function() {
+  var first = document.getElementById('f-first').value.trim();
+  var last  = document.getElementById('f-last').value.trim();
+  if (!first || !last) { showToast('Prenom et Nom obligatoires', 'error'); return; }
+
+  var contact = {
+    id:         Date.now(),
+    timestamp:  new Date().toLocaleString('fr-FR'),
+    prenom:     first,
+    nom:        last,
+    email:      document.getElementById('f-email').value.trim(),
+    telephone:  document.getElementById('f-phone').value.trim(),
+    entreprise: document.getElementById('f-company').value.trim(),
+    poste:      document.getElementById('f-role').value.trim(),
+    source:     currentSource,
+    priorite:   document.getElementById('f-priority').value,
+    notes:      document.getElementById('f-notes').value.trim(),
+    status:     'pending'
+  };
+
+  var history = loadHistory();
+  history.unshift(contact);
+  saveHistory(history);
+  sendToSheet(contact);
+});
+
+// ── Send to Google Sheets ─────────────────────────────────────
+function sendToSheet(contact) {
+  var url = loadUrl();
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  function done(status) {
+    updateStatus(contact.id, status);
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    showSuccessPanel(contact);
+  }
+
+  if (!url) { done('pending'); return; }
+
+  fetch(url, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(contact)
+  }).then(function() { done('sent'); }).catch(function() { done('error'); });
+}
+
+// ── Success panel ─────────────────────────────────────────────
+function showSuccessPanel(contact) {
+  document.getElementById('form-section').style.display = 'none';
+  var panel = document.getElementById('success-panel');
+  panel.style.display = 'flex';
+
+  document.getElementById('sp-name').textContent = contact.prenom + ' ' + contact.nom;
+  document.getElementById('sp-sub').textContent  =
+    (contact.entreprise || contact.poste || contact.email || 'Contact enregistre') + ' - ' + contact.priorite;
+
+  var sendEmail = getOpt(OPT_EMAIL) && contact.email;
+  var sendSms   = getOpt(OPT_SMS)   && contact.telephone;
+
+  var mailtoUrl = buildMailto(contact);
+  var smsUrl    = buildSms(contact);
+
+  var btns = document.getElementById('action-buttons');
+  btns.innerHTML = '';
+
+  // Build email button
+  if (contact.email) {
+    var eBtn = document.createElement('a');
+    eBtn.href = mailtoUrl;
+    eBtn.className = 'btn-action btn-email' + (sendEmail ? ' btn-auto' : '');
+    eBtn.innerHTML =
+      '<div class="btn-action-icon">&#9993;</div>' +
+      '<div class="btn-action-text">' +
+        '<span class="btn-action-label">Envoyer un email</span>' +
+        '<span class="btn-action-sub">' + contact.email + '</span>' +
+      '</div>' +
+      (sendEmail ? '<span class="btn-auto-badge">Auto</span>' : '');
+    btns.appendChild(eBtn);
+  }
+
+  // Build SMS button
+  if (contact.telephone) {
+    var sBtn = document.createElement('a');
+    sBtn.href = smsUrl;
+    sBtn.id = 'action-sms-btn';
+    sBtn.className = 'btn-action btn-sms' + (sendSms ? ' btn-auto' : '');
+    sBtn.innerHTML =
+      '<div class="btn-action-icon">&#128172;</div>' +
+      '<div class="btn-action-text">' +
+        '<span class="btn-action-label">Envoyer un SMS</span>' +
+        '<span class="btn-action-sub">' + contact.telephone + '</span>' +
+      '</div>' +
+      (sendSms ? '<span class="btn-auto-badge">Auto</span>' : '');
+    btns.appendChild(sBtn);
+  }
+
+  // Show action card only if there are buttons
+  document.getElementById('action-card').style.display =
+    (contact.email || contact.telephone) ? 'block' : 'none';
+
+  // Auto-trigger sequence
+  if (sendEmail && sendSms) {
+    // Both: open email first, SMS button pulses after return
+    setTimeout(function() {
+      window.location.href = mailtoUrl;
+      var smsBtn = document.getElementById('action-sms-btn');
+      if (smsBtn) {
+        smsBtn.classList.add('btn-pending');
+        smsBtn.querySelector('.btn-action-sub').textContent = 'Appuyez pour envoyer maintenant';
+      }
+    }, 600);
+  } else if (sendEmail) {
+    setTimeout(function() { window.location.href = mailtoUrl; }, 600);
+  } else if (sendSms) {
+    setTimeout(function() { window.location.href = smsUrl; }, 600);
+  }
+}
+
+// ── URL builders ──────────────────────────────────────────────
+function buildMailto(contact) {
+  var subject = encodeURIComponent('Ravi de vous avoir rencontre !');
+  var body = encodeURIComponent(
+    'Bonjour ' + contact.prenom + ',\n\n' +
+    'Ravi d\'avoir fait votre connaissance !\n\n' +
+    'Je reste disponible pour tout projet. N\'hesitez pas a me contacter.\n\n' +
+    'A tres bientot,\n\n' +
+    AGENT.name + '\n' +
+    AGENT.company + '\n' +
+    AGENT.phone + '\n' +
+    AGENT.email
+  );
+  return 'mailto:' + contact.email + '?subject=' + subject + '&body=' + body;
+}
+
+function buildSms(contact) {
+  var msg = encodeURIComponent(
+    'Bonjour ' + contact.prenom + ' 👋\n' +
+    'C\'est ' + AGENT.name + ' - ' + AGENT.company + '.\n' +
+    'Ravi d\'avoir echange avec vous !\n' +
+    AGENT.phone
+  );
+  return 'sms:' + contact.telephone + '?body=' + msg;
+}
+
+// ── New contact ───────────────────────────────────────────────
+document.getElementById('btn-new-contact').addEventListener('click', function() {
+  document.getElementById('success-panel').style.display = 'none';
+  document.getElementById('form-section').style.display = 'block';
+  resetForm();
+  window.scrollTo(0, 0);
+});
+
+function resetForm() {
+  document.getElementById('f-first').value   = '';
+  document.getElementById('f-last').value    = '';
+  document.getElementById('f-email').value   = '';
+  document.getElementById('f-phone').value   = '';
+  document.getElementById('f-company').value = '';
+  document.getElementById('f-role').value    = '';
+  document.getElementById('f-notes').value   = '';
+  document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelector('.pill[data-value="Salon"]').classList.add('active');
+  currentSource = 'Salon';
+  document.getElementById('f-priority').value = 'Chaud';
+}
+
+// ── History ───────────────────────────────────────────────────
+function updateStatus(id, status) {
+  var h = loadHistory();
+  for (var i = 0; i < h.length; i++) {
+    if (h[i].id === id) { h[i].status = status; break; }
+  }
+  saveHistory(h);
+}
+
+function renderHistory() {
+  var history = loadHistory();
+  var list  = document.getElementById('history-list');
+  var count = document.getElementById('hist-count');
+  var retry = document.getElementById('btn-retry');
+
+  count.textContent = history.length ? '(' + history.length + ')' : '';
+  retry.style.display = (history.some(function(c) { return c.status !== 'sent'; }) && loadUrl()) ? 'block' : 'none';
+
+  if (!history.length) {
+    list.innerHTML = '<div id="empty-history">Aucun contact pour l\'instant.</div>';
+    return;
+  }
+
+  var html = '';
+  history.forEach(function(c) {
+    var initials = ((c.prenom||'')[0]||'') + ((c.nom||'')[0]||'');
+    var badge = c.status === 'sent' ? 'Envoye' : c.status === 'pending' ? 'En attente' : 'Erreur';
+    var cls   = c.status === 'sent' ? '' : c.status === 'pending' ? 'pending' : 'error';
+    html += '<div class="hist-item">' +
+      '<div class="hist-avatar">' + esc(initials.toUpperCase()) + '</div>' +
+      '<div class="hist-info">' +
+        '<div class="hist-name">' + esc(c.prenom) + ' ' + esc(c.nom) + '</div>' +
+        '<div class="hist-sub">' + esc(c.entreprise || c.email || c.telephone || '-') + '</div>' +
+        '<div class="hist-sub" style="font-size:0.68rem;margin-top:2px">' + esc(c.timestamp) + ' - ' + esc(c.source) + '</div>' +
+      '</div>' +
+      '<span class="hist-badge ' + cls + '">' + badge + '</span>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+}
+
+document.getElementById('btn-retry').addEventListener('click', function() {
+  var pending = loadHistory().filter(function(c) { return c.status !== 'sent'; });
+  if (!pending.length) { showToast('Aucun contact en attente', ''); return; }
+  pending.forEach(function(c) { sendToSheet(c); });
+});
+
+// ── Toast ─────────────────────────────────────────────────────
+var toastTimer;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.className = ''; }, 3000);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Service Worker ────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>
