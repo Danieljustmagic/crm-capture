@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111111">
+  <title>Daniel Invernon — Nova Leadership</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --coral: #F16B6B;
+      --dark:  #111111;
+      --bg:    #FAF7F7;
+      --border: #E8DADA;
+    }
+
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+      background-image:
+        linear-gradient(rgba(241,107,107,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(241,107,107,0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--dark);
+      padding: 48px 24px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(241,107,107,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(241,107,107,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 60%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--coral), transparent);
+    }
+
+    .photo-wrap {
+      position: relative; display: inline-block;
+      margin-bottom: 20px; z-index: 1;
+    }
+    .photo-wrap::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(var(--coral), transparent, var(--coral));
+      animation: spin 6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .photo-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 50%;
+      background: var(--dark);
+    }
+
+    .photo {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      object-fit: cover; object-position: top;
+      display: block;
+      position: relative; z-index: 2;
+      border: 3px solid var(--dark);
+    }
+    .photo-fallback {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: var(--coral);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; font-weight: 700; color: #fff;
+      position: relative; z-index: 2;
+    }
+
+    .hero-name {
+      font-size: 1.7rem; font-weight: 700;
+      color: #fff; letter-spacing: 0.02em;
+      position: relative; z-index: 1;
+    }
+    .hero-title {
+      font-size: 0.8rem; font-weight: 600;
+      color: var(--coral); text-transform: uppercase;
+      letter-spacing: 0.12em; margin-top: 6px;
+      position: relative; z-index: 1;
+    }
+    .hero-company {
+      font-size: 0.72rem; color: rgba(255,255,255,0.4);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-top: 4px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── CONTENT ── */
+    .content { padding: 24px 20px; max-width: 480px; margin: 0 auto; }
+
+    /* Tagline */
+    .tagline {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-left: 4px solid var(--coral);
+      border-radius: 0 12px 12px 0;
+      padding: 14px 16px;
+      font-size: 0.95rem; font-weight: 600;
+      color: var(--dark); line-height: 1.5;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    /* Section */
+    .section-label {
+      font-size: 0.62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.15em;
+      color: #aaa; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* Services */
+    .services {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 20px;
+    }
+    .service-item {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .service-icon {
+      width: 32px; height: 32px;
+      background: #fde8e8;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .service-name {
+      font-size: 0.78rem; font-weight: 700;
+      color: var(--dark); text-transform: uppercase;
+      letter-spacing: 0.04em; line-height: 1.3;
+    }
+
+    /* Contact actions */
+    .contact-actions {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .contact-btn {
+      display: flex; align-items: center; gap: 14px;
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+      text-decoration: none; color: var(--dark);
+      transition: all 0.15s;
+    }
+    .contact-btn:active { opacity: 0.8; }
+    .contact-btn-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .icon-phone { background: #dcfce7; }
+    .icon-mail  { background: #fde8e8; }
+    .icon-web   { background: #e8effe; }
+    .contact-btn-label {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: #aaa; display: block;
+    }
+    .contact-btn-value {
+      font-size: 0.9rem; font-weight: 600;
+      color: var(--dark); display: block; margin-top: 1px;
+    }
+
+    /* Save CTA */
+    .btn-save {
+      display: block; width: 100%;
+      background: var(--coral); color: #fff;
+      border: none; border-radius: 12px;
+      padding: 16px; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; text-align: center;
+      font-family: inherit; text-decoration: none;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      transition: background 0.15s;
+    }
+    .btn-save:active { background: #e05555; }
+
+    .btn-site {
+      display: block; width: 100%;
+      background: transparent; color: var(--dark);
+      border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 14px; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; text-align: center;
+      font-family: inherit; text-decoration: none;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 24px;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center; padding-bottom: 32px;
+      font-size: 0.68rem; color: #ccc;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    footer span { color: var(--coral); }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="photo-wrap">
+    <img class="photo" src="./photo.jpg" alt="Daniel Invernon"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="photo-fallback" style="display:none">DI</div>
+  </div>
+  <div class="hero-name">Daniel Invernon</div>
+  <div class="hero-title">Coach-partenaire</div>
+  <div class="hero-company">Nova Leadership</div>
+</div>
+
+<div class="content">
+
+  <p class="tagline">
+    "Coach-partenaire pour structurer, décider et passer à l'action."
+  </p>
+
+  <div class="section-label">Mes domaines d'expertise</div>
+
+  <div class="services">
+    <div class="service-item">
+      <div class="service-icon">🎯</div>
+      <div class="service-name">Leadership personnel</div>
+    </div>
+    <div class="service-item">
+      <div class="service-icon">📊</div>
+      <div class="service-name">Finances maîtrisées</div>
+    </div>
+    <div class="service-item">
+      <div class="service-icon">🚀</div>
+      <div class="service-name">Coaching business</div>
+    </div>
+    <div class="service-item">
+      <div class="service-icon">🤖</div>
+      <div class="service-name">IA & Technologies</div>
+    </div>
+  </div>
+
+  <div class="section-label">Me contacter</div>
+
+  <div class="contact-actions">
+    <a class="contact-btn" href="tel:+33661427536">
+      <div class="contact-btn-icon icon-phone">📱</div>
+      <div>
+        <span class="contact-btn-label">Téléphone</span>
+        <span class="contact-btn-value">06 61 42 75 36</span>
+      </div>
+    </a>
+    <a class="contact-btn" href="mailto:daniel@novaleadership.fr">
+      <div class="contact-btn-icon icon-mail">✉️</div>
+      <div>
+        <span class="contact-btn-label">Email</span>
+        <span class="contact-btn-value">daniel@novaleadership.fr</span>
+      </div>
+    </a>
+    <a class="contact-btn" href="https://www.novaleadership.fr" target="_blank">
+      <div class="contact-btn-icon icon-web">🌐</div>
+      <div>
+        <span class="contact-btn-label">Site web</span>
+        <span class="contact-btn-value">novaleadership.fr</span>
+      </div>
+    </a>
+  </div>
+
+  <button class="btn-save" onclick="saveContact()">
+    + Enregistrer dans mes contacts
+  </button>
+
+  <a class="btn-site" href="https://www.novaleadership.fr" target="_blank">
+    Découvrir Nova Leadership →
+  </a>
+
+  <footer>
+    <span>Nova Leadership</span> · Tous droits réservés
+  </footer>
+
+</div>
+
+<script>
+function saveContact() {
+  var vcard =
+    'BEGIN:VCARD\r\n' +
+    'VERSION:3.0\r\n' +
+    'FN:Daniel Invernon\r\n' +
+    'N:Invernon;Daniel;;;\r\n' +
+    'ORG:Nova Leadership\r\n' +
+    'TITLE:Coach-partenaire\r\n' +
+    'TEL;TYPE=CELL:+33661427536\r\n' +
+    'EMAIL:daniel@novaleadership.fr\r\n' +
+    'URL:https://www.novaleadership.fr\r\n' +
+    'NOTE:Coach-partenaire pour structurer, decider et passer a l\'action.\r\n' +
+    'END:VCARD';
+
+  var blob = new Blob([vcard], { type: 'text/vcard' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'daniel-invernon.vcf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

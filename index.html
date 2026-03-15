@@ -10,6 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <title>Nova Leadership - Capture Contact</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -290,6 +291,45 @@
     }
     .icon-email { background: #fde8e8; }
     .icon-sms   { background: #e8effe; }
+    .icon-card  { background: #f0fde8; }
+
+    /* ── QR CODE ─────────────────────────────────────────── */
+    #qr-section {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+    #qr-section.visible { display: block; }
+    .qr-title {
+      font-size: 0.62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.15em;
+      color: var(--muted); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .qr-title::before {
+      content: ''; width: 3px; height: 14px;
+      background: var(--coral); border-radius: 2px; flex-shrink: 0;
+    }
+    #qr-canvas {
+      display: inline-block;
+      padding: 12px; background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+    }
+    .qr-sub {
+      font-size: 0.72rem; color: var(--muted);
+      margin-top: 10px; line-height: 1.4;
+    }
+    .qr-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.75rem; font-weight: 700;
+      color: var(--coral); text-decoration: none;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
     .send-option-info { flex: 1; }
     .send-option-label {
       font-size: 0.82rem; font-weight: 700;
@@ -538,6 +578,17 @@
       <span class="toggle-slider"></span>
     </label>
   </div>
+  <div class="settings-row">
+    <div class="send-option-icon icon-card">&#127806;</div>
+    <div class="settings-label">
+      Carte de visite
+      <span class="settings-sub">Joint le lien dans email et SMS</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="opt-card">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
 </div>
 
 <main>
@@ -645,6 +696,17 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div class="send-option-row">
+          <div class="send-option-icon icon-card">&#127806;</div>
+          <div class="send-option-info">
+            <div class="send-option-label">Carte de visite</div>
+            <div class="send-option-sub">Joint mon lien dans email et SMS</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="form-opt-card">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 
       <button id="btn-submit">
@@ -665,6 +727,13 @@
       <div class="card" id="action-card">
         <div class="action-title">Actions</div>
         <div class="action-buttons" id="action-buttons"></div>
+      </div>
+
+      <div id="qr-section">
+        <div class="qr-title">Ma carte de visite</div>
+        <div id="qr-canvas"></div>
+        <p class="qr-sub">Faites scanner ce QR code<br>pour acceder a ma carte de visite</p>
+        <a class="qr-link" id="qr-link" href="#" target="_blank">Ouvrir la carte →</a>
       </div>
 
       <button id="btn-new-contact">+ Nouveau contact</button>
@@ -701,6 +770,8 @@ var STORAGE_KEY  = 'crm_history';
 var URL_KEY      = 'crm_webapp_url';
 var OPT_EMAIL    = 'opt_email';
 var OPT_SMS      = 'opt_sms';
+var OPT_CARD     = 'opt_card';
+var CARD_URL     = 'https://danieljustmagic.github.io/crm-capture/card.html';
 var currentSource = 'Salon';
 
 function loadHistory()  { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; } }
@@ -717,9 +788,11 @@ updateConfigWarning();
 
 // Sync toggles from storage
 document.getElementById('opt-email').checked      = getOpt(OPT_EMAIL);
+document.getElementById('opt-card').checked       = getOpt(OPT_CARD);
 document.getElementById('opt-sms').checked        = getOpt(OPT_SMS);
 document.getElementById('form-opt-email').checked = getOpt(OPT_EMAIL);
 document.getElementById('form-opt-sms').checked   = getOpt(OPT_SMS);
+document.getElementById('form-opt-card').checked  = getOpt(OPT_CARD);
 
 // Save toggle changes (settings drawer)
 document.getElementById('opt-email').addEventListener('change', function() {
@@ -730,6 +803,10 @@ document.getElementById('opt-sms').addEventListener('change', function() {
   setOpt(OPT_SMS, this.checked);
   document.getElementById('form-opt-sms').checked = this.checked;
 });
+document.getElementById('opt-card').addEventListener('change', function() {
+  setOpt(OPT_CARD, this.checked);
+  document.getElementById('form-opt-card').checked = this.checked;
+});
 // Save toggle changes (form)
 document.getElementById('form-opt-email').addEventListener('change', function() {
   setOpt(OPT_EMAIL, this.checked);
@@ -738,6 +815,10 @@ document.getElementById('form-opt-email').addEventListener('change', function() 
 document.getElementById('form-opt-sms').addEventListener('change', function() {
   setOpt(OPT_SMS, this.checked);
   document.getElementById('opt-sms').checked = this.checked;
+});
+document.getElementById('form-opt-card').addEventListener('change', function() {
+  setOpt(OPT_CARD, this.checked);
+  document.getElementById('opt-card').checked = this.checked;
 });
 
 // Config button
@@ -896,6 +977,22 @@ function showSuccessPanel(contact) {
   document.getElementById('action-card').style.display =
     (contact.email || contact.telephone) ? 'block' : 'none';
 
+  // QR code carte de visite — toujours affiché
+  var qrSection = document.getElementById('qr-section');
+  var qrCanvas  = document.getElementById('qr-canvas');
+  var qrLink    = document.getElementById('qr-link');
+  qrCanvas.innerHTML = '';
+  qrLink.href = CARD_URL;
+  new QRCode(qrCanvas, {
+    text:          CARD_URL,
+    width:         160,
+    height:        160,
+    colorDark:     '#111111',
+    colorLight:    '#ffffff',
+    correctLevel:  QRCode.CorrectLevel.H
+  });
+  qrSection.classList.add('visible');
+
   // Auto-trigger sequence
   if (sendEmail && sendSms) {
     // Both: open email first, SMS button pulses after return
@@ -916,28 +1013,35 @@ function showSuccessPanel(contact) {
 
 // ── URL builders ──────────────────────────────────────────────
 function buildMailto(contact) {
-  var subject = encodeURIComponent('Ravi de vous avoir rencontre !');
-  var body = encodeURIComponent(
+  var withCard = getOpt(OPT_CARD);
+  var subject  = encodeURIComponent('Ravi de vous avoir rencontre !');
+  var bodyText =
     'Bonjour ' + contact.prenom + ',\n\n' +
     'Ravi d\'avoir fait votre connaissance !\n\n' +
-    'Je reste disponible pour tout projet. N\'hesitez pas a me contacter.\n\n' +
+    'Je reste disponible pour tout projet. N\'hesitez pas a me contacter.\n\n';
+  if (withCard) {
+    bodyText += 'Retrouvez ma carte de visite en ligne :\n' + CARD_URL + '\n\n';
+  }
+  bodyText +=
     'A tres bientot,\n\n' +
     AGENT.name + '\n' +
     AGENT.company + '\n' +
     AGENT.phone + '\n' +
-    AGENT.email
-  );
-  return 'mailto:' + contact.email + '?subject=' + subject + '&body=' + body;
+    AGENT.email;
+  return 'mailto:' + contact.email + '?subject=' + encodeURIComponent('Ravi de vous avoir rencontre !') + '&body=' + encodeURIComponent(bodyText);
 }
 
 function buildSms(contact) {
-  var msg = encodeURIComponent(
-    'Bonjour ' + contact.prenom + ' 👋\n' +
+  var withCard = getOpt(OPT_CARD);
+  var msg =
+    'Bonjour ' + contact.prenom + ' !\n' +
     'C\'est ' + AGENT.name + ' - ' + AGENT.company + '.\n' +
     'Ravi d\'avoir echange avec vous !\n' +
-    AGENT.phone
-  );
-  return 'sms:' + contact.telephone + '?body=' + msg;
+    AGENT.phone;
+  if (withCard) {
+    msg += '\n\nMa carte de visite : ' + CARD_URL;
+  }
+  return 'sms:' + contact.telephone + '?body=' + encodeURIComponent(msg);
 }
 
 // ── New contact ───────────────────────────────────────────────
@@ -1027,6 +1131,12 @@ function esc(s) {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function() {});
 }
+
+// ── Réinitialiser QR au nouveau contact ───────────────────────
+document.getElementById('btn-new-contact').addEventListener('click', function() {
+  document.getElementById('qr-section').classList.remove('visible');
+  document.getElementById('qr-canvas').innerHTML = '';
+}, true);
 </script>
 </body>
 </html>
