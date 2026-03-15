@@ -31,23 +31,9 @@
     /* ── HERO ── */
     .hero {
       background: var(--dark);
-      padding: 0 0 28px;
       text-align: center;
       position: relative;
       overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(241,107,107,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(241,107,107,0.06) 1px, transparent 1px);
-      background-size: 28px 28px;
-      pointer-events: none;
-    }
-    .hero-text {
-      padding-top: 16px;
-      position: relative; z-index: 1;
     }
     .hero::after {
       content: '';
@@ -57,33 +43,48 @@
       background: linear-gradient(90deg, transparent, var(--coral), transparent);
     }
 
+    /* Photo pleine largeur */
     .photo-wrap {
       position: relative;
-      width: 150px; height: 190px;
-      margin: 0 auto 20px;
-      border-radius: 16px;
+      width: 100%;
+      aspect-ratio: 439 / 620;   /* montre visage + buste + veste */
       overflow: hidden;
-      border: 3px solid var(--coral);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 6px rgba(241,107,107,0.15);
-      z-index: 1;
+      background: #fff;
+    }
+    /* fondu bas vers le fond sombre */
+    .photo-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 45%;
+      background: linear-gradient(to bottom, transparent, var(--dark));
+      pointer-events: none;
     }
 
     .photo {
       width: 100%; height: 100%;
       object-fit: cover;
-      object-position: center 8%;
+      object-position: center 6%;
       display: block;
     }
     .photo-fallback {
       width: 100%; height: 100%;
       background: var(--coral);
       display: flex; align-items: center; justify-content: center;
-      font-size: 3rem; font-weight: 700; color: #fff;
+      font-size: 4rem; font-weight: 700; color: #fff;
     }
 
+    /* Texte en superposition sur la photo, en bas */
+    .hero-text {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 0 20px 24px;
+      z-index: 2;
+    }
     .hero-name {
-      font-size: 1.7rem; font-weight: 700;
+      font-size: 1.9rem; font-weight: 700;
       color: #fff; letter-spacing: 0.02em;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
     }
     .hero-title {
       font-size: 0.8rem; font-weight: 600;
@@ -91,7 +92,7 @@
       letter-spacing: 0.12em; margin-top: 6px;
     }
     .hero-company {
-      font-size: 0.72rem; color: rgba(255,255,255,0.4);
+      font-size: 0.72rem; color: rgba(255,255,255,0.5);
       text-transform: uppercase; letter-spacing: 0.1em;
       margin-top: 4px;
     }
@@ -222,11 +223,11 @@
     <img class="photo" src="./photo.jpeg" alt="Daniel Invernon"
          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <div class="photo-fallback" style="display:none">DI</div>
-  </div>
-  <div class="hero-text">
-    <div class="hero-name">Daniel Invernon</div>
-    <div class="hero-title">Coach-partenaire</div>
-    <div class="hero-company">Nova Leadership</div>
+    <div class="hero-text">
+      <div class="hero-name">Daniel Invernon</div>
+      <div class="hero-title">Coach-partenaire</div>
+      <div class="hero-company">Nova Leadership</div>
+    </div>
   </div>
 </div>
 
