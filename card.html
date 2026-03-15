@@ -329,8 +329,8 @@
     + Enregistrer dans mes contacts
   </button>
 
-  <!-- Envoi rapide par SMS -->
-  <div class="send-card-box">
+  <!-- Envoi rapide par SMS (visible uniquement avec ?send dans l'URL) -->
+  <div class="send-card-box" id="send-box" style="display:none">
     <div class="send-card-title">💬 Envoyer ma carte par SMS</div>
     <div class="send-card-row">
       <input class="send-card-input" type="tel" id="sms-number"
@@ -369,8 +369,11 @@ function sendCardBySms() {
   input.value = '';
 }
 
-// Envoi au clavier "Entrée"
+// Affiche le bloc envoi uniquement si l'URL contient ?send
 document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.search.indexOf('send') !== -1) {
+    document.getElementById('send-box').style.display = 'block';
+  }
   document.getElementById('sms-number').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); sendCardBySms(); }
   });
