@@ -1041,7 +1041,11 @@ function buildSms(contact) {
   if (withCard) {
     msg += '\n\nMa carte de visite : ' + CARD_URL;
   }
-  return 'sms:' + contact.telephone + '?body=' + encodeURIComponent(msg);
+  // iOS exige '&body=' ; Android accepte '?body='
+  var sep = isIOS ? '&' : '?';
+  // Numéro sans espaces pour l'URL
+  var tel = contact.telephone.replace(/\s+/g, '');
+  return 'sms:' + tel + sep + 'body=' + encodeURIComponent(msg);
 }
 
 // ── New contact ───────────────────────────────────────────────
