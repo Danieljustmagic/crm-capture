@@ -31,7 +31,7 @@
     /* ── HERO ── */
     .hero {
       background: var(--dark);
-      padding: 48px 24px 32px;
+      padding: 0 0 28px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -43,69 +43,63 @@
         linear-gradient(rgba(241,107,107,0.06) 1px, transparent 1px),
         linear-gradient(90deg, rgba(241,107,107,0.06) 1px, transparent 1px);
       background-size: 28px 28px;
+      pointer-events: none;
+    }
+    .hero-text {
+      padding-top: 16px;
+      position: relative; z-index: 1;
     }
     .hero::after {
       content: '';
       position: absolute;
-      bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 60%; height: 1px;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
       background: linear-gradient(90deg, transparent, var(--coral), transparent);
     }
 
     .photo-wrap {
-      position: relative; display: inline-block;
-      margin-bottom: 20px; z-index: 1;
+      position: relative;
+      margin-bottom: 0;
+      z-index: 1;
+      width: 100%;
+      height: 320px;
+      overflow: hidden;
     }
-    .photo-wrap::before {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      background: conic-gradient(var(--coral), transparent, var(--coral));
-      animation: spin 6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .photo-wrap::after {
       content: '';
       position: absolute;
-      inset: -1px;
-      border-radius: 50%;
-      background: var(--dark);
+      bottom: 0; left: 0; right: 0;
+      height: 120px;
+      background: linear-gradient(to top, var(--dark), transparent);
+      z-index: 2;
     }
 
     .photo {
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      object-fit: cover; object-position: top;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center top;
       display: block;
-      position: relative; z-index: 2;
-      border: 3px solid var(--dark);
     }
     .photo-fallback {
-      width: 120px; height: 120px;
-      border-radius: 50%;
+      width: 100%; height: 100%;
       background: var(--coral);
       display: flex; align-items: center; justify-content: center;
-      font-size: 2.2rem; font-weight: 700; color: #fff;
-      position: relative; z-index: 2;
+      font-size: 4rem; font-weight: 700; color: #fff;
     }
 
     .hero-name {
       font-size: 1.7rem; font-weight: 700;
       color: #fff; letter-spacing: 0.02em;
-      position: relative; z-index: 1;
     }
     .hero-title {
       font-size: 0.8rem; font-weight: 600;
       color: var(--coral); text-transform: uppercase;
       letter-spacing: 0.12em; margin-top: 6px;
-      position: relative; z-index: 1;
     }
     .hero-company {
       font-size: 0.72rem; color: rgba(255,255,255,0.4);
       text-transform: uppercase; letter-spacing: 0.1em;
       margin-top: 4px;
-      position: relative; z-index: 1;
     }
 
     /* ── CONTENT ── */
@@ -235,9 +229,11 @@
          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <div class="photo-fallback" style="display:none">DI</div>
   </div>
-  <div class="hero-name">Daniel Invernon</div>
-  <div class="hero-title">Coach-partenaire</div>
-  <div class="hero-company">Nova Leadership</div>
+  <div class="hero-text">
+    <div class="hero-name">Daniel Invernon</div>
+    <div class="hero-title">Coach-partenaire</div>
+    <div class="hero-company">Nova Leadership</div>
+  </div>
 </div>
 
 <div class="content">
