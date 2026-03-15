@@ -207,6 +207,47 @@
       margin-bottom: 24px;
     }
 
+    /* Envoi rapide SMS */
+    .send-card-box {
+      background: var(--dark);
+      border: 1.5px solid rgba(241,107,107,0.25);
+      border-radius: 16px;
+      padding: 20px 16px;
+      margin-bottom: 20px;
+    }
+    .send-card-title {
+      font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--coral); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .send-card-row {
+      display: flex; gap: 10px; align-items: stretch;
+    }
+    .send-card-input {
+      flex: 1;
+      background: rgba(255,255,255,0.07);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 13px 14px;
+      font-size: 1rem; font-family: inherit;
+      color: #fff;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .send-card-input::placeholder { color: rgba(255,255,255,0.3); }
+    .send-card-input:focus { border-color: var(--coral); }
+    .send-card-btn {
+      background: var(--coral); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 0 18px;
+      font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .send-card-btn:active { background: #e05555; }
+
     /* Footer */
     footer {
       text-align: center; padding-bottom: 32px;
@@ -288,6 +329,16 @@
     + Enregistrer dans mes contacts
   </button>
 
+  <!-- Envoi rapide par SMS -->
+  <div class="send-card-box">
+    <div class="send-card-title">💬 Envoyer ma carte par SMS</div>
+    <div class="send-card-row">
+      <input class="send-card-input" type="tel" id="sms-number"
+             placeholder="06 00 00 00 00" inputmode="tel">
+      <button class="send-card-btn" onclick="sendCardBySms()" title="Envoyer">➤</button>
+    </div>
+  </div>
+
   <a class="btn-site" href="https://www.novaleadership.fr" target="_blank">
     Découvrir Nova Leadership →
   </a>
@@ -299,6 +350,32 @@
 </div>
 
 <script>
+var CARD_URL = 'https://danieljustmagic.github.io/crm-capture/card.html';
+var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+function sendCardBySms() {
+  var input = document.getElementById('sms-number');
+  var tel   = input.value.replace(/\s+/g, '').trim();
+  if (!tel) { input.focus(); return; }
+
+  var msg =
+    'Bonjour !\n' +
+    'Je vous partage ma carte de visite :\n' +
+    CARD_URL + '\n\n' +
+    'Daniel Invernon — Nova Leadership';
+
+  var sep = isIOS ? '&' : '?';
+  window.location.href = 'sms:' + tel + sep + 'body=' + encodeURIComponent(msg);
+  input.value = '';
+}
+
+// Envoi au clavier "Entrée"
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('sms-number').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendCardBySms(); }
+  });
+});
+
 function saveContact() {
   var vcard =
     'BEGIN:VCARD\r\n' +
