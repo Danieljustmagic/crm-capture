@@ -77,6 +77,51 @@
       font-size: 1rem; padding: 6px 9px;
       line-height: 1;
     }
+    #btn-scan {
+      background: var(--coral);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 1.1rem; padding: 6px 10px;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #btn-scan:active { opacity: 0.8; }
+
+    /* ── SCAN OVERLAY ───────────────────────────────────────── */
+    #scan-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    #scan-overlay.open { display: flex; }
+    .scan-spinner {
+      width: 56px; height: 56px;
+      border: 4px solid rgba(255,255,255,0.15);
+      border-top-color: var(--coral);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scan-label {
+      color: #fff; font-size: 0.95rem; font-weight: 600;
+      text-align: center; line-height: 1.5;
+    }
+    .scan-sub {
+      color: rgba(255,255,255,0.4); font-size: 0.75rem;
+      text-align: center;
+    }
+    #scan-preview {
+      width: 200px; border-radius: 12px;
+      border: 2px solid var(--coral);
+      display: none;
+    }
 
     /* ── SETTINGS DRAWER ────────────────────────────────── */
     #settings-drawer {
@@ -547,8 +592,21 @@
     <h1>Nova Leadership</h1>
     <p>Capture de contact</p>
   </div>
+  <button id="btn-scan" title="Scanner une carte de visite" onclick="startScan()">📷</button>
   <button id="btn-config" title="Parametres">&#9881;</button>
 </header>
+
+<!-- Input caméra caché -->
+<input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none">
+
+<!-- Overlay de scan -->
+<div id="scan-overlay">
+  <img id="scan-preview" alt="Carte scannée">
+  <div class="scan-spinner" id="scan-spinner"></div>
+  <div class="scan-label" id="scan-label">Analyse de la carte en cours…</div>
+  <div class="scan-sub" id="scan-sub">Reconnaissance du texte</div>
+  <button onclick="closeScanOverlay()" style="margin-top:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;padding:10px 24px;font-family:inherit;font-size:0.85rem;cursor:pointer;">Annuler</button>
+</div>
 
 <div id="settings-drawer">
   <div class="url-row">
@@ -1129,6 +1187,160 @@ function showToast(msg, type) {
 
 function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── SCAN CARTE DE VISITE ─────────────────────────────────────
+var scanInput = document.getElementById('scan-input');
+
+function startScan() {
+  scanInput.value = '';
+  scanInput.click();
+}
+
+function closeScanOverlay() {
+  document.getElementById('scan-overlay').classList.remove('open');
+  scanInput.value = '';
+}
+
+scanInput.addEventListener('change', function() {
+  var file = this.files[0];
+  if (!file) return;
+
+  // Afficher l'overlay avec prévisualisation
+  var overlay  = document.getElementById('scan-overlay');
+  var preview  = document.getElementById('scan-preview');
+  var spinner  = document.getElementById('scan-spinner');
+  var label    = document.getElementById('scan-label');
+  var sub      = document.getElementById('scan-sub');
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  overlay.classList.add('open');
+  spinner.style.display = 'block';
+  label.textContent = 'Analyse de la carte en cours…';
+  sub.textContent   = 'Chargement du moteur OCR';
+
+  // Charger Tesseract.js à la demande
+  function runOcr() {
+    sub.textContent = 'Reconnaissance du texte…';
+    Tesseract.recognize(file, 'fra+eng', {
+      logger: function(m) {
+        if (m.status === 'recognizing text') {
+          sub.textContent = 'Lecture : ' + Math.round(m.progress * 100) + '%';
+        }
+      }
+    }).then(function(result) {
+      spinner.style.display = 'none';
+      label.textContent = '✅ Carte analysée !';
+      sub.textContent   = 'Remplissage du formulaire…';
+      parseCardText(result.data.text);
+      setTimeout(function() {
+        overlay.classList.remove('open');
+        // Aller sur l'onglet formulaire
+        document.querySelector('.tab[data-tab="form"]').click();
+        showToast('Champs remplis depuis la carte 📇');
+      }, 800);
+    }).catch(function(err) {
+      spinner.style.display = 'none';
+      label.textContent = '❌ Échec de la lecture';
+      sub.textContent   = 'Veuillez réessayer avec une meilleure photo';
+      console.error(err);
+    });
+  }
+
+  if (window.Tesseract) {
+    runOcr();
+  } else {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload = runOcr;
+    s.onerror = function() {
+      label.textContent = '❌ Connexion requise';
+      sub.textContent   = 'Impossible de charger le moteur OCR';
+    };
+    document.head.appendChild(s);
+  }
+});
+
+function parseCardText(text) {
+  var lines = text.split('\n')
+    .map(function(l) { return l.trim(); })
+    .filter(function(l) { return l.length > 1; });
+
+  // Email
+  var emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  if (emailMatch) setField('f-email', emailMatch[0].toLowerCase());
+
+  // Téléphone (formats FR : 06, 07, +33, 01-05, 08, 09)
+  var phoneMatch = text.match(/(?:\+33\s?|0033\s?)?(?:0\s?)?[1-9](?:[\s.\-]?\d{2}){4}/);
+  if (phoneMatch) setField('f-phone', phoneMatch[0].replace(/\s/g, ' ').trim());
+
+  // Site web
+  var webMatch = text.match(/(?:www\.[\w\-]+\.[\w.]{2,}|https?:\/\/[\w\-./]+)/i);
+
+  // Lignes nettoyées sans email/tel/web
+  var cleanLines = lines.filter(function(l) {
+    if (emailMatch && l.toLowerCase().includes(emailMatch[0].toLowerCase())) return false;
+    if (phoneMatch && l.includes(phoneMatch[0].replace(/\s/g, ''))) return false;
+    if (webMatch   && l.toLowerCase().includes(webMatch[0].toLowerCase())) return false;
+    if (/^[\d\s().+\-\/]+$/.test(l)) return false; // que des chiffres/ponctuation
+    if (l.length < 3) return false;
+    return true;
+  });
+
+  // Nom : ligne avec 2 mots commençant par une majuscule
+  var nameLine = '';
+  var titleLine = '';
+  var companyLine = '';
+
+  cleanLines.forEach(function(line) {
+    // Mots tous en majuscules → probable entreprise ou poste
+    var words = line.split(/\s+/);
+    var allCaps = words.every(function(w) { return w === w.toUpperCase() && w.length > 1; });
+    // Deux mots avec initiales en majuscule → probable nom
+    var namePattern = /^[A-ZÀ-Ü][a-zà-ü]+(?:\s[A-ZÀ-Ü][a-zà-ü]+)+$/.test(line);
+    // Contient des mots clés de poste
+    var roleKeywords = /directeur|manager|responsable|gérant|président|ceo|cto|daf|dg|coach|consultant|associé|fondateur|commercial|ingénieur|développeur|architecte|chargé/i.test(line);
+    // Contient des mots clés d'entreprise
+    var compKeywords = /sas|sarl|sa\b|sasu|eurl|groupe|solutions|conseil|services|holding|agency|agence|studio|associés/i.test(line);
+
+    if (!nameLine && namePattern) {
+      nameLine = line;
+    } else if (!titleLine && roleKeywords) {
+      titleLine = line;
+    } else if (!companyLine && (allCaps || compKeywords)) {
+      companyLine = line;
+    } else if (!companyLine && !titleLine) {
+      // Heuristique : lignes courtes = poste ou entreprise
+      if (line.length < 40 && !nameLine) {
+        companyLine = line;
+      } else if (line.length < 50) {
+        titleLine = titleLine || line;
+      }
+    }
+  });
+
+  // Remplir les champs
+  if (nameLine) {
+    var parts = nameLine.trim().split(/\s+/);
+    // Dernier mot = nom de famille (convention française)
+    setField('f-firstname', parts.slice(0, -1).join(' '));
+    setField('f-lastname', parts[parts.length - 1]);
+  }
+  if (companyLine) setField('f-company', companyLine);
+  if (titleLine)   setField('f-role', titleLine);
+}
+
+function setField(id, value) {
+  var el = document.getElementById(id);
+  if (el && value && !el.value) {
+    el.value = value.trim();
+  }
 }
 
 // ── Service Worker ────────────────────────────────────────────
