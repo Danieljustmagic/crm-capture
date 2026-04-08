@@ -766,35 +766,21 @@
       <div class="scan-confirm-sub">Vérifiez et corrigez avant d'importer</div>
     </div>
     <div class="scan-confirm-body">
-      <!-- Lignes reconnues : tap pour assigner -->
-      <div class="scan-lines-label">Tapez une ligne pour l'assigner à un champ ↓</div>
-      <div id="scan-lines-list"></div>
-
-      <div style="height:1px;background:#2a2a2a;margin:12px 0"></div>
-
-      <div class="scan-field-row">
+      <div class="scan-field-row" style="margin-top:12px">
         <span class="scan-field-label">Prénom</span>
-        <input class="scan-field-input" id="sc-firstname" type="text" placeholder="—" onfocus="setScanTarget('sc-firstname')">
+        <input class="scan-field-input" id="sc-firstname" type="text" placeholder="—">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Nom</span>
-        <input class="scan-field-input" id="sc-lastname" type="text" placeholder="—" onfocus="setScanTarget('sc-lastname')">
+        <input class="scan-field-input" id="sc-lastname" type="text" placeholder="—">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Email</span>
-        <input class="scan-field-input" id="sc-email" type="email" placeholder="—" onfocus="setScanTarget('sc-email')">
+        <input class="scan-field-input" id="sc-email" type="email" placeholder="—">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Téléphone</span>
-        <input class="scan-field-input" id="sc-phone" type="tel" placeholder="—" onfocus="setScanTarget('sc-phone')">
-      </div>
-      <div class="scan-field-row">
-        <span class="scan-field-label">Entreprise</span>
-        <input class="scan-field-input" id="sc-company" type="text" placeholder="Tapez une ligne ci-dessus" onfocus="setScanTarget('sc-company')">
-      </div>
-      <div class="scan-field-row">
-        <span class="scan-field-label">Poste</span>
-        <input class="scan-field-input" id="sc-role" type="text" placeholder="Tapez une ligne ci-dessus" onfocus="setScanTarget('sc-role')">
+        <input class="scan-field-input" id="sc-phone" type="tel" placeholder="—">
       </div>
     </div>
     <div class="scan-confirm-footer">
@@ -1427,9 +1413,7 @@ function applyScanResult() {
     ['sc-firstname', 'f-first'],
     ['sc-lastname',  'f-last'],
     ['sc-email',     'f-email'],
-    ['sc-phone',     'f-phone'],
-    ['sc-company',   'f-company'],
-    ['sc-role',      'f-role']
+    ['sc-phone',     'f-phone']
   ];
   map.forEach(function(pair) {
     var val = document.getElementById(pair[0]).value.trim();
@@ -1437,7 +1421,7 @@ function applyScanResult() {
   });
   closeScanConfirm();
   document.querySelector('.tab[data-tab="form"]').click();
-  showToast('Champs importés depuis la carte 📇');
+  showToast('Contact importé depuis la carte 📇');
 }
 
 function setScanField(id, value) {
@@ -1478,13 +1462,13 @@ function buildScanLines(lines) {
 }
 
 function parseCardText(text) {
-  var result = { firstname:'', lastname:'', email:'', phone:'', company:'', role:'' };
+  var result = { firstname:'', lastname:'', email:'', phone:'' };
 
-  // ── Email ─────────────────────────────────────────────────
+  // Email
   var emailM = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
   if (emailM) result.email = emailM[0].toLowerCase();
 
-  // ── Téléphone ─────────────────────────────────────────────
+  // Téléphone
   var phonePatterns = [
     /\+33[\s.\-]?[1-9](?:[\s.\-]?\d{2}){4}/,
     /0[1-9](?:[\s.\-]?\d{2}){4}/,
@@ -1495,55 +1479,22 @@ function parseCardText(text) {
     if (pm) { result.phone = pm[0].trim(); break; }
   }
 
-  // ── Lignes propres (sans email, tel, web, adresse, vide) ──
-  var clean = text.split('\n')
-    .map(function(l){ return l.trim(); })
-    .filter(function(l){
-      if (l.length < 3) return false;
-      if (result.email && l.toLowerCase().indexOf(result.email.toLowerCase()) !== -1) return false;
-      if (result.phone && l.replace(/[\s.\-]/g,'').indexOf(result.phone.replace(/[\s.\-]/g,'')) !== -1) return false;
-      if (/(?:www\.|https?:\/\/)/i.test(l)) return false;           // URL
-      if (/^\s*[\d\s().+\-\/\\|@#*_=]{3,}\s*$/.test(l)) return false; // que symboles/chiffres
-      if (/(?:rue|avenue|boulevard|allée|cedex|\d{4,})/i.test(l)) return false; // adresse
-      return true;
-    });
-
-  // ── Attribution simplifiée : ordre naturel de la carte ────
-  // Ligne 1 → nom complet
-  // Lignes suivantes → poste puis entreprise (ou l'inverse selon mots clés)
-  var roleRx = /directeur|director|manager|responsable|gérant|président|ceo|cto|cfo|daf|coach|consultant|associé|fondateur|commercial|ingénieur|chargé|partner|executive|chef|coordinat|account|vente|achat/i;
-  var compRx = /\bsas\b|\bsarl\b|\bsa\b|\bsasu\b|\beurl\b|groupe|group|solutions|conseil|services|holding|agence|studio|consulting|immobilier|finance|capital|technologies|digital|media/i;
-
-  var remaining = clean.slice(); // copie
-
-  // Nom : première ligne sans chiffres, 1 à 4 mots
-  for (var i = 0; i < remaining.length; i++) {
-    var l = remaining[i];
-    if (!/\d/.test(l) && l.split(/\s+/).length <= 4) {
-      var parts = l.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        result.firstname = parts[0];
-        result.lastname  = parts.slice(1).join(' ');
-      } else {
-        result.lastname = l;
-      }
-      remaining.splice(i, 1);
+  // Nom/Prénom : première ligne sans chiffres ni symboles
+  var lines = text.split('\n').map(function(l){ return l.trim(); });
+  for (var i = 0; i < lines.length; i++) {
+    var l = lines[i];
+    if (l.length < 2) continue;
+    if (/\d/.test(l)) continue;
+    if (/@/.test(l)) continue;
+    if (/(?:www\.|https?:\/\/)/i.test(l)) continue;
+    var words = l.split(/\s+/).filter(function(w){ return w.length > 0; });
+    if (words.length >= 2 && words.length <= 4) {
+      result.firstname = words[0];
+      result.lastname  = words.slice(1).join(' ');
       break;
     }
   }
 
-  // Poste et entreprise dans les lignes restantes
-  for (var j = 0; j < remaining.length; j++) {
-    var rl = remaining[j];
-    if (!result.role && (roleRx.test(rl) || (!compRx.test(rl) && rl.length < 50))) {
-      result.role = rl;
-    } else if (!result.company) {
-      result.company = rl;
-    }
-    if (result.role && result.company) break;
-  }
-
-  result.allLines = clean; // toutes les lignes propres pour les chips
   return result;
 }
 
