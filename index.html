@@ -202,18 +202,22 @@
       padding: 16px 18px; font-size: 0.88rem;
       font-family: inherit; cursor: pointer;
     }
-    .scan-raw-toggle {
-      font-size: 0.68rem; color: rgba(255,255,255,0.3);
-      text-align: center; margin-top: 10px;
-      cursor: pointer; text-decoration: underline;
+    .scan-lines-label {
+      font-size: 0.65rem; color: rgba(255,255,255,0.35);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 8px; margin-top: 4px;
     }
-    .scan-raw-text {
-      display: none; margin-top: 8px;
-      background: #111; border-radius: 8px;
-      padding: 10px; font-size: 0.7rem;
-      color: rgba(255,255,255,0.4); line-height: 1.5;
-      white-space: pre-wrap; word-break: break-all;
-      max-height: 100px; overflow-y: auto;
+    .scan-line-chip {
+      display: inline-block;
+      background: #2a2a2a; border: 1px solid #3a3a3a;
+      border-radius: 8px; padding: 7px 12px;
+      font-size: 0.82rem; color: #fff;
+      margin: 0 6px 6px 0; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .scan-line-chip:active, .scan-line-chip.used {
+      background: #1a3a1a; border-color: #2a6e3f;
+      color: rgba(255,255,255,0.5);
     }
 
     /* ── SETTINGS DRAWER ────────────────────────────────── */
@@ -709,32 +713,36 @@
       <div class="scan-confirm-sub">Vérifiez et corrigez avant d'importer</div>
     </div>
     <div class="scan-confirm-body">
-      <div class="scan-field-row" style="margin-top:12px">
+      <!-- Lignes reconnues : tap pour assigner -->
+      <div class="scan-lines-label">Tapez une ligne pour l'assigner à un champ ↓</div>
+      <div id="scan-lines-list"></div>
+
+      <div style="height:1px;background:#2a2a2a;margin:12px 0"></div>
+
+      <div class="scan-field-row">
         <span class="scan-field-label">Prénom</span>
-        <input class="scan-field-input" id="sc-firstname" type="text" placeholder="—">
+        <input class="scan-field-input" id="sc-firstname" type="text" placeholder="—" onfocus="setScanTarget('sc-firstname')">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Nom</span>
-        <input class="scan-field-input" id="sc-lastname" type="text" placeholder="—">
+        <input class="scan-field-input" id="sc-lastname" type="text" placeholder="—" onfocus="setScanTarget('sc-lastname')">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Email</span>
-        <input class="scan-field-input" id="sc-email" type="email" placeholder="—">
+        <input class="scan-field-input" id="sc-email" type="email" placeholder="—" onfocus="setScanTarget('sc-email')">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Téléphone</span>
-        <input class="scan-field-input" id="sc-phone" type="tel" placeholder="—">
+        <input class="scan-field-input" id="sc-phone" type="tel" placeholder="—" onfocus="setScanTarget('sc-phone')">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Entreprise</span>
-        <input class="scan-field-input" id="sc-company" type="text" placeholder="—">
+        <input class="scan-field-input" id="sc-company" type="text" placeholder="Tapez une ligne ci-dessus" onfocus="setScanTarget('sc-company')">
       </div>
       <div class="scan-field-row">
         <span class="scan-field-label">Poste</span>
-        <input class="scan-field-input" id="sc-role" type="text" placeholder="—">
+        <input class="scan-field-input" id="sc-role" type="text" placeholder="Tapez une ligne ci-dessus" onfocus="setScanTarget('sc-role')">
       </div>
-      <div class="scan-raw-toggle" onclick="toggleRawText()">Voir le texte brut reconnu</div>
-      <div class="scan-raw-text" id="scan-raw-text"></div>
     </div>
     <div class="scan-confirm-footer">
       <div class="scan-confirm-actions">
@@ -1376,6 +1384,38 @@ function setScanField(id, value) {
   }
 }
 
+// Champ cible actif pour l'assignation par tap
+var scanTarget = null;
+function setScanTarget(id) { scanTarget = id; }
+
+function buildScanLines(lines) {
+  var container = document.getElementById('scan-lines-list');
+  container.innerHTML = '';
+  lines.forEach(function(line) {
+    if (!line || line.length < 2) return;
+    var chip = document.createElement('button');
+    chip.className = 'scan-line-chip';
+    chip.textContent = line;
+    chip.onclick = function() {
+      // Assigner au champ ciblé, sinon au premier champ vide (entreprise ou poste)
+      var target = scanTarget;
+      if (!target) {
+        var scCompany = document.getElementById('sc-company');
+        var scRole    = document.getElementById('sc-role');
+        if (!scCompany.value) target = 'sc-company';
+        else if (!scRole.value) target = 'sc-role';
+      }
+      if (target) {
+        document.getElementById(target).value = line;
+        document.getElementById(target).classList.add('detected');
+        chip.classList.add('used');
+        scanTarget = null;
+      }
+    };
+    container.appendChild(chip);
+  });
+}
+
 scanInput.addEventListener('change', function() {
   var file = this.files[0];
   if (!file) return;
@@ -1417,7 +1457,8 @@ scanInput.addEventListener('change', function() {
       setScanField('sc-phone',     parsed.phone);
       setScanField('sc-company',   parsed.company);
       setScanField('sc-role',      parsed.role);
-      document.getElementById('scan-raw-text').textContent = result.data.text;
+      // Afficher toutes les lignes propres comme chips cliquables
+      buildScanLines(parsed.allLines);
       document.getElementById('scan-confirm').classList.add('open');
     }).catch(function(err) {
       spinner.style.display = 'none';
@@ -1507,6 +1548,7 @@ function parseCardText(text) {
     if (result.role && result.company) break;
   }
 
+  result.allLines = clean; // toutes les lignes propres pour les chips
   return result;
 }
 
