@@ -99,6 +99,7 @@
       align-items: center;
       justify-content: center;
       gap: 20px;
+      padding: 24px;
     }
     #scan-overlay.open { display: flex; }
     .scan-spinner {
@@ -118,9 +119,85 @@
       text-align: center;
     }
     #scan-preview {
-      width: 200px; border-radius: 12px;
+      width: 180px; border-radius: 12px;
       border: 2px solid var(--coral);
       display: none;
+    }
+
+    /* ── SCAN CONFIRM MODAL ─────────────────────────────────── */
+    #scan-confirm {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 101;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 0;
+    }
+    #scan-confirm.open { display: flex; }
+    .scan-confirm-sheet {
+      background: #1a1a1a;
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px;
+      padding: 20px 20px 36px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .scan-confirm-title {
+      font-size: 1rem; font-weight: 700; color: #fff;
+      margin-bottom: 4px;
+    }
+    .scan-confirm-sub {
+      font-size: 0.72rem; color: rgba(255,255,255,0.4);
+      margin-bottom: 16px;
+    }
+    .scan-field-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .scan-field-label {
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      width: 80px; flex-shrink: 0;
+    }
+    .scan-field-input {
+      flex: 1; background: #111;
+      border: 1px solid #333; border-radius: 8px;
+      padding: 8px 10px; font-size: 0.85rem;
+      color: #fff; font-family: inherit;
+      outline: none;
+    }
+    .scan-field-input:focus { border-color: var(--coral); }
+    .scan-field-input.detected { border-color: #2a6e3f; background: #0d1f14; }
+    .scan-confirm-actions {
+      display: flex; gap: 10px; margin-top: 16px;
+    }
+    .btn-confirm-ok {
+      flex: 1; background: var(--coral); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 14px; font-size: 0.88rem; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .btn-confirm-cancel {
+      background: #333; color: rgba(255,255,255,0.6);
+      border: none; border-radius: 10px;
+      padding: 14px 18px; font-size: 0.88rem;
+      font-family: inherit; cursor: pointer;
+    }
+    .scan-raw-toggle {
+      font-size: 0.68rem; color: rgba(255,255,255,0.3);
+      text-align: center; margin-top: 12px;
+      cursor: pointer; text-decoration: underline;
+    }
+    .scan-raw-text {
+      display: none; margin-top: 8px;
+      background: #111; border-radius: 8px;
+      padding: 10px; font-size: 0.7rem;
+      color: rgba(255,255,255,0.4); line-height: 1.5;
+      white-space: pre-wrap; word-break: break-all;
+      max-height: 120px; overflow-y: auto;
     }
 
     /* ── SETTINGS DRAWER ────────────────────────────────── */
@@ -599,13 +676,53 @@
 <!-- Input caméra caché -->
 <input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none">
 
-<!-- Overlay de scan -->
+<!-- Overlay de scan (chargement) -->
 <div id="scan-overlay">
   <img id="scan-preview" alt="Carte scannée">
   <div class="scan-spinner" id="scan-spinner"></div>
   <div class="scan-label" id="scan-label">Analyse de la carte en cours…</div>
   <div class="scan-sub" id="scan-sub">Reconnaissance du texte</div>
   <button onclick="closeScanOverlay()" style="margin-top:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;padding:10px 24px;font-family:inherit;font-size:0.85rem;cursor:pointer;">Annuler</button>
+</div>
+
+<!-- Modal de confirmation scan -->
+<div id="scan-confirm">
+  <div class="scan-confirm-sheet">
+    <div class="scan-confirm-title">📇 Carte détectée</div>
+    <div class="scan-confirm-sub">Vérifiez et corrigez si nécessaire avant d'importer</div>
+
+    <div class="scan-field-row">
+      <span class="scan-field-label">Prénom</span>
+      <input class="scan-field-input" id="sc-firstname" type="text" placeholder="—">
+    </div>
+    <div class="scan-field-row">
+      <span class="scan-field-label">Nom</span>
+      <input class="scan-field-input" id="sc-lastname" type="text" placeholder="—">
+    </div>
+    <div class="scan-field-row">
+      <span class="scan-field-label">Email</span>
+      <input class="scan-field-input" id="sc-email" type="email" placeholder="—">
+    </div>
+    <div class="scan-field-row">
+      <span class="scan-field-label">Téléphone</span>
+      <input class="scan-field-input" id="sc-phone" type="tel" placeholder="—">
+    </div>
+    <div class="scan-field-row">
+      <span class="scan-field-label">Entreprise</span>
+      <input class="scan-field-input" id="sc-company" type="text" placeholder="—">
+    </div>
+    <div class="scan-field-row">
+      <span class="scan-field-label">Poste</span>
+      <input class="scan-field-input" id="sc-role" type="text" placeholder="—">
+    </div>
+
+    <div class="scan-confirm-actions">
+      <button class="btn-confirm-cancel" onclick="closeScanConfirm()">Annuler</button>
+      <button class="btn-confirm-ok" onclick="applyScanResult()">✓ Importer dans le formulaire</button>
+    </div>
+    <div class="scan-raw-toggle" onclick="toggleRawText()">Voir le texte brut reconnu</div>
+    <div class="scan-raw-text" id="scan-raw-text"></div>
+  </div>
 </div>
 
 <div id="settings-drawer">
@@ -1202,17 +1319,54 @@ function closeScanOverlay() {
   scanInput.value = '';
 }
 
+function closeScanConfirm() {
+  document.getElementById('scan-confirm').classList.remove('open');
+}
+
+function toggleRawText() {
+  var el = document.getElementById('scan-raw-text');
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+function applyScanResult() {
+  // Copier les champs du modal vers le formulaire
+  var map = [
+    ['sc-firstname', 'f-firstname'],
+    ['sc-lastname',  'f-lastname'],
+    ['sc-email',     'f-email'],
+    ['sc-phone',     'f-phone'],
+    ['sc-company',   'f-company'],
+    ['sc-role',      'f-role']
+  ];
+  map.forEach(function(pair) {
+    var val = document.getElementById(pair[0]).value.trim();
+    if (val) document.getElementById(pair[1]).value = val;
+  });
+  closeScanConfirm();
+  document.querySelector('.tab[data-tab="form"]').click();
+  showToast('Champs importés depuis la carte 📇');
+}
+
+function setScanField(id, value) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.value = value ? value.trim() : '';
+    if (value && value.trim()) el.classList.add('detected');
+    else el.classList.remove('detected');
+  }
+}
+
 scanInput.addEventListener('change', function() {
   var file = this.files[0];
   if (!file) return;
 
-  // Afficher l'overlay avec prévisualisation
-  var overlay  = document.getElementById('scan-overlay');
-  var preview  = document.getElementById('scan-preview');
-  var spinner  = document.getElementById('scan-spinner');
-  var label    = document.getElementById('scan-label');
-  var sub      = document.getElementById('scan-sub');
+  var overlay = document.getElementById('scan-overlay');
+  var preview = document.getElementById('scan-preview');
+  var spinner = document.getElementById('scan-spinner');
+  var label   = document.getElementById('scan-label');
+  var sub     = document.getElementById('scan-sub');
 
+  // Prévisualisation de l'image
   var reader = new FileReader();
   reader.onload = function(e) {
     preview.src = e.target.result;
@@ -1225,7 +1379,6 @@ scanInput.addEventListener('change', function() {
   label.textContent = 'Analyse de la carte en cours…';
   sub.textContent   = 'Chargement du moteur OCR';
 
-  // Charger Tesseract.js à la demande
   function runOcr() {
     sub.textContent = 'Reconnaissance du texte…';
     Tesseract.recognize(file, 'fra+eng', {
@@ -1235,16 +1388,17 @@ scanInput.addEventListener('change', function() {
         }
       }
     }).then(function(result) {
-      spinner.style.display = 'none';
-      label.textContent = '✅ Carte analysée !';
-      sub.textContent   = 'Remplissage du formulaire…';
-      parseCardText(result.data.text);
-      setTimeout(function() {
-        overlay.classList.remove('open');
-        // Aller sur l'onglet formulaire
-        document.querySelector('.tab[data-tab="form"]').click();
-        showToast('Champs remplis depuis la carte 📇');
-      }, 800);
+      overlay.classList.remove('open');
+      var parsed = parseCardText(result.data.text);
+      // Remplir le modal de confirmation
+      setScanField('sc-firstname', parsed.firstname);
+      setScanField('sc-lastname',  parsed.lastname);
+      setScanField('sc-email',     parsed.email);
+      setScanField('sc-phone',     parsed.phone);
+      setScanField('sc-company',   parsed.company);
+      setScanField('sc-role',      parsed.role);
+      document.getElementById('scan-raw-text').textContent = result.data.text;
+      document.getElementById('scan-confirm').classList.add('open');
     }).catch(function(err) {
       spinner.style.display = 'none';
       label.textContent = '❌ Échec de la lecture';
@@ -1268,79 +1422,107 @@ scanInput.addEventListener('change', function() {
 });
 
 function parseCardText(text) {
-  var lines = text.split('\n')
-    .map(function(l) { return l.trim(); })
-    .filter(function(l) { return l.length > 1; });
+  var result = { firstname:'', lastname:'', email:'', phone:'', company:'', role:'' };
+  var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 1; });
 
-  // Email
-  var emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
-  if (emailMatch) setField('f-email', emailMatch[0].toLowerCase());
+  // ── Email ─────────────────────────────────────────────────
+  var emailRx = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
+  var emailM = text.match(emailRx);
+  if (emailM) result.email = emailM[0].toLowerCase();
 
-  // Téléphone (formats FR : 06, 07, +33, 01-05, 08, 09)
-  var phoneMatch = text.match(/(?:\+33\s?|0033\s?)?(?:0\s?)?[1-9](?:[\s.\-]?\d{2}){4}/);
-  if (phoneMatch) setField('f-phone', phoneMatch[0].replace(/\s/g, ' ').trim());
+  // ── Téléphone ─────────────────────────────────────────────
+  // Formats : +33 6 12 34 56 78 / 06.12.34.56.78 / 06 12 34 56 78 / 0612345678
+  var phoneRx = [
+    /\+33\s?[\s.\-]?[1-9](?:[\s.\-]?\d{2}){4}/,
+    /0[1-9](?:[\s.\-]?\d{2}){4}/,
+    /\d{2}[\s.\-]\d{2}[\s.\-]\d{2}[\s.\-]\d{2}[\s.\-]\d{2}/
+  ];
+  for (var pi = 0; pi < phoneRx.length; pi++) {
+    var pm = text.match(phoneRx[pi]);
+    if (pm) { result.phone = pm[0].trim(); break; }
+  }
 
-  // Site web
-  var webMatch = text.match(/(?:www\.[\w\-]+\.[\w.]{2,}|https?:\/\/[\w\-./]+)/i);
+  // ── Filtrer les lignes parasites ──────────────────────────
+  var addrRx    = /rue|avenue|boulevard|allée|impasse|cedex|\d{5}/i;
+  var numOnlyRx = /^[\d\s().+\-\/]+$/;
+  var webRx     = /(?:www\.|https?:\/\/)/i;
 
-  // Lignes nettoyées sans email/tel/web
-  var cleanLines = lines.filter(function(l) {
-    if (emailMatch && l.toLowerCase().includes(emailMatch[0].toLowerCase())) return false;
-    if (phoneMatch && l.includes(phoneMatch[0].replace(/\s/g, ''))) return false;
-    if (webMatch   && l.toLowerCase().includes(webMatch[0].toLowerCase())) return false;
-    if (/^[\d\s().+\-\/]+$/.test(l)) return false; // que des chiffres/ponctuation
-    if (l.length < 3) return false;
+  var clean = lines.filter(function(l) {
+    if (result.email && l.toLowerCase().indexOf(result.email) !== -1) return false;
+    if (result.phone && l.replace(/\s/g,'').indexOf(result.phone.replace(/\s/g,'')) !== -1) return false;
+    if (addrRx.test(l) || numOnlyRx.test(l) || webRx.test(l)) return false;
+    if (l.length < 2) return false;
     return true;
   });
 
-  // Nom : ligne avec 2 mots commençant par une majuscule
-  var nameLine = '';
-  var titleLine = '';
-  var companyLine = '';
+  // ── Mots clés de poste / entreprise ──────────────────────
+  var roleRx = /directeur|director|manager|responsable|gérant|président|ceo|cto|cfo|daf|dg|coach|consultant|associé|fondateur|founder|commercial|ingénieur|architecte|chargé|account|partner|executive|head\s|lead\s|chef|coordinat/i;
+  var compRx = /\bsas\b|\bsarl\b|\bsa\b|\bsasu\b|\beurl\b|groupe|group|solutions|conseil|services|holding|agency|agence|studio|associés|partners|consulting|immobilier|finance|capital|technologies|digital|media|éditions|editions/i;
 
-  cleanLines.forEach(function(line) {
-    // Mots tous en majuscules → probable entreprise ou poste
-    var words = line.split(/\s+/);
-    var allCaps = words.every(function(w) { return w === w.toUpperCase() && w.length > 1; });
-    // Deux mots avec initiales en majuscule → probable nom
-    var namePattern = /^[A-ZÀ-Ü][a-zà-ü]+(?:\s[A-ZÀ-Ü][a-zà-ü]+)+$/.test(line);
-    // Contient des mots clés de poste
-    var roleKeywords = /directeur|manager|responsable|gérant|président|ceo|cto|daf|dg|coach|consultant|associé|fondateur|commercial|ingénieur|développeur|architecte|chargé/i.test(line);
-    // Contient des mots clés d'entreprise
-    var compKeywords = /sas|sarl|sa\b|sasu|eurl|groupe|solutions|conseil|services|holding|agency|agence|studio|associés/i.test(line);
+  var nameLine='', titleLine='', companyLine='';
 
-    if (!nameLine && namePattern) {
+  clean.forEach(function(line) {
+    var words = line.split(/\s+/).filter(function(w){ return w.length > 0; });
+    var hasRole = roleRx.test(line);
+    var hasComp = compRx.test(line);
+    // Ligne en MAJUSCULES → souvent nom de famille ou entreprise
+    var isAllCaps = line === line.toUpperCase() && /[A-ZÀÂÉÈÊËÎÏÔÙÛÜÆŒ]/.test(line);
+    // 2 à 4 mots débutant par une majuscule, sans chiffres
+    var looksLikeName = !hasRole && !hasComp && !/\d/.test(line) &&
+      words.length >= 2 && words.length <= 4 &&
+      words.filter(function(w){ return /^[A-ZÀÂÉÈÊËÎÏÔÙÛÜÆŒ]/.test(w); }).length >= 2;
+
+    if (!nameLine && !hasRole && !hasComp && looksLikeName) {
       nameLine = line;
-    } else if (!titleLine && roleKeywords) {
+    } else if (!titleLine && hasRole) {
       titleLine = line;
-    } else if (!companyLine && (allCaps || compKeywords)) {
+    } else if (!companyLine && (hasComp || (isAllCaps && words.length <= 5))) {
       companyLine = line;
-    } else if (!companyLine && !titleLine) {
-      // Heuristique : lignes courtes = poste ou entreprise
-      if (line.length < 40 && !nameLine) {
-        companyLine = line;
-      } else if (line.length < 50) {
-        titleLine = titleLine || line;
-      }
+    } else if (!companyLine && !titleLine && line.length < 50 && !hasRole) {
+      titleLine = line;
     }
   });
 
-  // Remplir les champs
+  // Heuristique supplémentaire : si aucun nom trouvé, première ligne courte sans chiffres
+  if (!nameLine) {
+    for (var ci = 0; ci < clean.length; ci++) {
+      var cl = clean[ci];
+      var cw = cl.split(/\s+/);
+      if (cw.length >= 2 && cw.length <= 3 && !/\d/.test(cl) && cl.length < 40) {
+        nameLine = cl; break;
+      }
+    }
+  }
+
+  // Décomposer le nom
   if (nameLine) {
     var parts = nameLine.trim().split(/\s+/);
-    // Dernier mot = nom de famille (convention française)
-    setField('f-firstname', parts.slice(0, -1).join(' '));
-    setField('f-lastname', parts[parts.length - 1]);
+    if (parts.length >= 2) {
+      // Si tout en majuscules : NOM PRÉNOM (ordre inversé fréquent sur cartes FR)
+      if (nameLine === nameLine.toUpperCase()) {
+        result.lastname  = cap(parts[0]);
+        result.firstname = parts.slice(1).map(cap).join(' ');
+      } else {
+        result.firstname = parts[0];
+        result.lastname  = parts.slice(1).join(' ');
+      }
+    } else {
+      result.lastname = nameLine;
+    }
   }
-  if (companyLine) setField('f-company', companyLine);
-  if (titleLine)   setField('f-role', titleLine);
+
+  result.company = companyLine;
+  result.role    = titleLine;
+  return result;
+}
+
+function cap(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
 }
 
 function setField(id, value) {
   var el = document.getElementById(id);
-  if (el && value && !el.value) {
-    el.value = value.trim();
-  }
+  if (el && value && !el.value) el.value = value.trim();
 }
 
 // ── Service Worker ────────────────────────────────────────────
