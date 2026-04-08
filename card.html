@@ -351,21 +351,32 @@
 
     .btn-site {
       display: block; width: 100%;
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      background: var(--dark3);
+      color: #fff;
+      border: none;
       border-radius: 14px;
-      padding: 16px;
-      font-size: 0.82rem; font-weight: 600;
+      padding: 17px;
+      font-size: 0.82rem; font-weight: 700;
       cursor: pointer; text-align: center;
       font-family: inherit;
       text-decoration: none;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       margin-bottom: 32px;
-      transition: border-color 0.15s, color 0.15s;
+      z-index: 0;
     }
-    .btn-site:active { border-color: var(--teal); color: var(--teal); }
+    .btn-site::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 15px;
+      background: linear-gradient(-45deg, var(--coral), var(--navy), var(--teal), var(--coral));
+      background-size: 400% 400%;
+      animation: gradientShift 6s ease infinite;
+      z-index: -1;
+    }
+    .btn-site:active { opacity: 0.85; }
 
     /* ── SEND BOX (mode ?send) ── */
     .send-card-box {
