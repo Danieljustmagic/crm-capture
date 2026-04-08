@@ -1443,108 +1443,71 @@ scanInput.addEventListener('change', function() {
 
 function parseCardText(text) {
   var result = { firstname:'', lastname:'', email:'', phone:'', company:'', role:'' };
-  var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 1; });
 
   // ── Email ─────────────────────────────────────────────────
-  var emailRx = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
-  var emailM = text.match(emailRx);
+  var emailM = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
   if (emailM) result.email = emailM[0].toLowerCase();
 
   // ── Téléphone ─────────────────────────────────────────────
-  // Formats : +33 6 12 34 56 78 / 06.12.34.56.78 / 06 12 34 56 78 / 0612345678
-  var phoneRx = [
-    /\+33\s?[\s.\-]?[1-9](?:[\s.\-]?\d{2}){4}/,
+  var phonePatterns = [
+    /\+33[\s.\-]?[1-9](?:[\s.\-]?\d{2}){4}/,
     /0[1-9](?:[\s.\-]?\d{2}){4}/,
     /\d{2}[\s.\-]\d{2}[\s.\-]\d{2}[\s.\-]\d{2}[\s.\-]\d{2}/
   ];
-  for (var pi = 0; pi < phoneRx.length; pi++) {
-    var pm = text.match(phoneRx[pi]);
+  for (var pi = 0; pi < phonePatterns.length; pi++) {
+    var pm = text.match(phonePatterns[pi]);
     if (pm) { result.phone = pm[0].trim(); break; }
   }
 
-  // ── Filtrer les lignes parasites ──────────────────────────
-  var addrRx    = /rue|avenue|boulevard|allée|impasse|cedex|\d{5}/i;
-  var numOnlyRx = /^[\d\s().+\-\/]+$/;
-  var webRx     = /(?:www\.|https?:\/\/)/i;
+  // ── Lignes propres (sans email, tel, web, adresse, vide) ──
+  var clean = text.split('\n')
+    .map(function(l){ return l.trim(); })
+    .filter(function(l){
+      if (l.length < 3) return false;
+      if (result.email && l.toLowerCase().indexOf(result.email.toLowerCase()) !== -1) return false;
+      if (result.phone && l.replace(/[\s.\-]/g,'').indexOf(result.phone.replace(/[\s.\-]/g,'')) !== -1) return false;
+      if (/(?:www\.|https?:\/\/)/i.test(l)) return false;           // URL
+      if (/^\s*[\d\s().+\-\/\\|@#*_=]{3,}\s*$/.test(l)) return false; // que symboles/chiffres
+      if (/(?:rue|avenue|boulevard|allée|cedex|\d{4,})/i.test(l)) return false; // adresse
+      return true;
+    });
 
-  var clean = lines.filter(function(l) {
-    if (result.email && l.toLowerCase().indexOf(result.email) !== -1) return false;
-    if (result.phone && l.replace(/\s/g,'').indexOf(result.phone.replace(/\s/g,'')) !== -1) return false;
-    if (addrRx.test(l) || numOnlyRx.test(l) || webRx.test(l)) return false;
-    if (l.length < 2) return false;
-    return true;
-  });
+  // ── Attribution simplifiée : ordre naturel de la carte ────
+  // Ligne 1 → nom complet
+  // Lignes suivantes → poste puis entreprise (ou l'inverse selon mots clés)
+  var roleRx = /directeur|director|manager|responsable|gérant|président|ceo|cto|cfo|daf|coach|consultant|associé|fondateur|commercial|ingénieur|chargé|partner|executive|chef|coordinat|account|vente|achat/i;
+  var compRx = /\bsas\b|\bsarl\b|\bsa\b|\bsasu\b|\beurl\b|groupe|group|solutions|conseil|services|holding|agence|studio|consulting|immobilier|finance|capital|technologies|digital|media/i;
 
-  // ── Mots clés de poste / entreprise ──────────────────────
-  var roleRx = /directeur|director|manager|responsable|gérant|président|ceo|cto|cfo|daf|dg|coach|consultant|associé|fondateur|founder|commercial|ingénieur|architecte|chargé|account|partner|executive|head\s|lead\s|chef|coordinat/i;
-  var compRx = /\bsas\b|\bsarl\b|\bsa\b|\bsasu\b|\beurl\b|groupe|group|solutions|conseil|services|holding|agency|agence|studio|associés|partners|consulting|immobilier|finance|capital|technologies|digital|media|éditions|editions/i;
+  var remaining = clean.slice(); // copie
 
-  var nameLine='', titleLine='', companyLine='';
-
-  clean.forEach(function(line) {
-    var words = line.split(/\s+/).filter(function(w){ return w.length > 0; });
-    var hasRole = roleRx.test(line);
-    var hasComp = compRx.test(line);
-    var isAllCaps = line === line.toUpperCase() && /[A-ZÀÂÉÈÊËÎÏÔÙÛÜÆŒ]/.test(line);
-    var looksLikeName = !hasRole && !hasComp && !/\d/.test(line) &&
-      words.length >= 2 && words.length <= 4 &&
-      words.filter(function(w){ return /^[A-ZÀÂÉÈÊËÎÏÔÙÛÜÆŒ]/.test(w); }).length >= 2;
-
-    if (!nameLine && !hasRole && !hasComp && looksLikeName) {
-      nameLine = line;
-    } else if (!titleLine && hasRole) {
-      titleLine = line;
-    } else if (!companyLine && (hasComp || (isAllCaps && words.length <= 5))) {
-      companyLine = line;
-    }
-  });
-
-  // Heuristique : si aucun nom trouvé, première ligne courte sans chiffres
-  if (!nameLine) {
-    for (var ci = 0; ci < clean.length; ci++) {
-      var cl = clean[ci];
-      var cw = cl.split(/\s+/);
-      if (cw.length >= 2 && cw.length <= 3 && !/\d/.test(cl) && cl.length < 40) {
-        nameLine = cl; break;
-      }
-    }
-  }
-
-  // Heuristique poste : prendre toute ligne courte non utilisée comme nom ou entreprise
-  if (!titleLine) {
-    for (var ti = 0; ti < clean.length; ti++) {
-      var tl = clean[ti];
-      if (tl === nameLine || tl === companyLine) continue;
-      if (!/\d/.test(tl) && tl.length < 60 && tl.length > 3) {
-        titleLine = tl; break;
-      }
-    }
-  }
-
-  // Décomposer le nom
-  if (nameLine) {
-    var parts = nameLine.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      // Si tout en majuscules : NOM PRÉNOM (ordre inversé fréquent sur cartes FR)
-      if (nameLine === nameLine.toUpperCase()) {
-        result.lastname  = cap(parts[0]);
-        result.firstname = parts.slice(1).map(cap).join(' ');
-      } else {
+  // Nom : première ligne sans chiffres, 1 à 4 mots
+  for (var i = 0; i < remaining.length; i++) {
+    var l = remaining[i];
+    if (!/\d/.test(l) && l.split(/\s+/).length <= 4) {
+      var parts = l.trim().split(/\s+/);
+      if (parts.length >= 2) {
         result.firstname = parts[0];
         result.lastname  = parts.slice(1).join(' ');
+      } else {
+        result.lastname = l;
       }
-    } else {
-      result.lastname = nameLine;
+      remaining.splice(i, 1);
+      break;
     }
   }
 
-  result.company = companyLine;
-  result.role    = titleLine;
-  return result;
-}
+  // Poste et entreprise dans les lignes restantes
+  for (var j = 0; j < remaining.length; j++) {
+    var rl = remaining[j];
+    if (!result.role && (roleRx.test(rl) || (!compRx.test(rl) && rl.length < 50))) {
+      result.role = rl;
+    } else if (!result.company) {
+      result.company = rl;
+    }
+    if (result.role && result.company) break;
+  }
 
-function cap(str) {
-  return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+  return result;
 }
 
 function setField(id, value) {
