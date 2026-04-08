@@ -546,7 +546,7 @@ function sendCardBySms() {
   var input = document.getElementById('sms-number');
   var tel   = input.value.replace(/\s+/g, '').trim();
   if (!tel) { input.focus(); return; }
-  var msg = 'Bonjour,\n\nRavi(e) d\'avoir fait votre connaissance ! Je vous transmets ma carte de visite, n\'hésitez pas à me contacter pour échanger.\n\n👉 ' + CARD_URL + '\n\nAu plaisir d\'un prochain échange,\nDaniel Invernon\nCoach-partenaire · Nova Leadership';
+  var msg = 'Bonjour,\n\nRavi(e) d\'avoir fait votre connaissance ! Je vous transmets ma carte de visite, n\'hésitez pas à me contacter pour échanger.\n\n👉 ' + CARD_URL + '\n\nAvec l\'envie de grandir ensemble,\nDaniel Invernon\nCoach-partenaire · Nova Leadership';
   var sep = isIOS ? '&' : '?';
   window.location.href = 'sms:' + tel + sep + 'body=' + encodeURIComponent(msg);
   input.value = '';
