@@ -1,4 +1,4 @@
-var CACHE = 'nv-capture-v1';
+var CACHE = 'nv-capture-v2';
 var FILES = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', function(e) {
