@@ -93,36 +93,69 @@
     #scan-overlay {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.88);
       z-index: 100;
-      flex-direction: column;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
-      gap: 20px;
-      padding: 24px;
     }
     #scan-overlay.open { display: flex; }
-    .scan-spinner {
-      width: 56px; height: 56px;
-      border: 4px solid rgba(255,255,255,0.15);
-      border-top-color: var(--coral);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .scan-sheet {
+      background: #1a1a1a;
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px;
+      padding: 24px 20px 40px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .scan-label {
-      color: #fff; font-size: 0.95rem; font-weight: 600;
-      text-align: center; line-height: 1.5;
+    .scan-sheet-title {
+      font-size: 1rem; font-weight: 700; color: #fff;
+      margin-bottom: 16px;
     }
-    .scan-sub {
-      color: rgba(255,255,255,0.4); font-size: 0.75rem;
-      text-align: center;
+    .scan-steps {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 18px;
     }
-    #scan-preview {
-      width: 180px; border-radius: 12px;
-      border: 2px solid var(--coral);
-      display: none;
+    .scan-step {
+      display: flex; align-items: flex-start; gap: 12px;
     }
+    .scan-step-num {
+      width: 24px; height: 24px; flex-shrink: 0;
+      background: var(--coral); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; color: #fff;
+    }
+    .scan-step-text {
+      font-size: 0.85rem; color: rgba(255,255,255,0.8);
+      line-height: 1.4; padding-top: 3px;
+    }
+    .scan-step-text strong { color: #fff; }
+    .scan-textarea {
+      width: 100%; min-height: 100px;
+      background: #111; border: 1.5px solid #333;
+      border-radius: 12px; padding: 12px;
+      font-size: 0.9rem; color: #fff;
+      font-family: inherit; line-height: 1.5;
+      resize: none; outline: none;
+      -webkit-appearance: none;
+      margin-bottom: 14px;
+    }
+    .scan-textarea:focus { border-color: var(--coral); }
+    .scan-textarea::placeholder { color: rgba(255,255,255,0.25); }
+    .scan-sheet-actions {
+      display: flex; gap: 10px;
+    }
+    .btn-scan-cancel {
+      background: #333; color: rgba(255,255,255,0.6);
+      border: none; border-radius: 10px;
+      padding: 14px 18px; font-size: 0.88rem;
+      font-family: inherit; cursor: pointer;
+    }
+    .btn-scan-go {
+      flex: 1; background: var(--coral); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 14px; font-size: 0.88rem; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .btn-scan-go:active { background: #e05555; }
 
     /* ── SCAN CONFIRM MODAL ─────────────────────────────────── */
     #scan-confirm {
@@ -693,16 +726,36 @@
   <button id="btn-config" title="Parametres">&#9881;</button>
 </header>
 
-<!-- Input caméra caché -->
-<input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none">
-
-<!-- Overlay de scan (chargement) -->
+<!-- Overlay scan — iOS Live Text -->
 <div id="scan-overlay">
-  <img id="scan-preview" alt="Carte scannée">
-  <div class="scan-spinner" id="scan-spinner"></div>
-  <div class="scan-label" id="scan-label">Analyse de la carte en cours…</div>
-  <div class="scan-sub" id="scan-sub">Reconnaissance du texte</div>
-  <button onclick="closeScanOverlay()" style="margin-top:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;padding:10px 24px;font-family:inherit;font-size:0.85rem;cursor:pointer;">Annuler</button>
+  <div class="scan-sheet">
+    <div class="scan-sheet-title">📷 Scanner une carte de visite</div>
+    <div class="scan-steps">
+      <div class="scan-step">
+        <div class="scan-step-num">1</div>
+        <div class="scan-step-text">Appuyez sur la zone de texte ci-dessous</div>
+      </div>
+      <div class="scan-step">
+        <div class="scan-step-num">2</div>
+        <div class="scan-step-text">Sur le clavier, appuyez sur l'icône <strong>Scan Text</strong> — c'est l'icône avec des lignes et une caméra, en bas à droite du clavier</div>
+      </div>
+      <div class="scan-step">
+        <div class="scan-step-num">3</div>
+        <div class="scan-step-text">Pointez votre iPhone vers la carte → le texte apparaît → appuyez <strong>Insérer</strong></div>
+      </div>
+      <div class="scan-step">
+        <div class="scan-step-num">4</div>
+        <div class="scan-step-text">Appuyez sur <strong>Analyser →</strong></div>
+      </div>
+    </div>
+    <textarea class="scan-textarea" id="scan-textarea"
+      placeholder="Le texte de la carte apparaîtra ici…"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    <div class="scan-sheet-actions">
+      <button class="btn-scan-cancel" onclick="closeScanOverlay()">Annuler</button>
+      <button class="btn-scan-go" onclick="analyzePastedText()">Analyser →</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal de confirmation scan -->
@@ -1334,30 +1387,42 @@ function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── SCAN CARTE DE VISITE ─────────────────────────────────────
-var scanInput = document.getElementById('scan-input');
-
+// ── SCAN CARTE DE VISITE — iOS Live Text ─────────────────────
 function startScan() {
-  scanInput.value = '';
-  scanInput.click();
+  document.getElementById('scan-textarea').value = '';
+  document.getElementById('scan-overlay').classList.add('open');
+  setTimeout(function() {
+    document.getElementById('scan-textarea').focus();
+  }, 350);
 }
 
 function closeScanOverlay() {
   document.getElementById('scan-overlay').classList.remove('open');
-  scanInput.value = '';
 }
 
 function closeScanConfirm() {
   document.getElementById('scan-confirm').classList.remove('open');
 }
 
-function toggleRawText() {
-  var el = document.getElementById('scan-raw-text');
-  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+function analyzePastedText() {
+  var text = document.getElementById('scan-textarea').value.trim();
+  if (!text) {
+    showToast('Veuillez d\'abord insérer le texte de la carte');
+    return;
+  }
+  var parsed = parseCardText(text);
+  setScanField('sc-firstname', parsed.firstname);
+  setScanField('sc-lastname',  parsed.lastname);
+  setScanField('sc-email',     parsed.email);
+  setScanField('sc-phone',     parsed.phone);
+  setScanField('sc-company',   parsed.company);
+  setScanField('sc-role',      parsed.role);
+  buildScanLines(parsed.allLines);
+  closeScanOverlay();
+  document.getElementById('scan-confirm').classList.add('open');
 }
 
 function applyScanResult() {
-  // Copier les champs du modal vers le formulaire
   var map = [
     ['sc-firstname', 'f-first'],
     ['sc-lastname',  'f-last'],
@@ -1384,7 +1449,6 @@ function setScanField(id, value) {
   }
 }
 
-// Champ cible actif pour l'assignation par tap
 var scanTarget = null;
 function setScanTarget(id) { scanTarget = id; }
 
@@ -1397,13 +1461,10 @@ function buildScanLines(lines) {
     chip.className = 'scan-line-chip';
     chip.textContent = line;
     chip.onclick = function() {
-      // Assigner au champ ciblé, sinon au premier champ vide (entreprise ou poste)
       var target = scanTarget;
       if (!target) {
-        var scCompany = document.getElementById('sc-company');
-        var scRole    = document.getElementById('sc-role');
-        if (!scCompany.value) target = 'sc-company';
-        else if (!scRole.value) target = 'sc-role';
+        if (!document.getElementById('sc-company').value) target = 'sc-company';
+        else if (!document.getElementById('sc-role').value) target = 'sc-role';
       }
       if (target) {
         document.getElementById(target).value = line;
@@ -1415,72 +1476,6 @@ function buildScanLines(lines) {
     container.appendChild(chip);
   });
 }
-
-scanInput.addEventListener('change', function() {
-  var file = this.files[0];
-  if (!file) return;
-
-  var overlay = document.getElementById('scan-overlay');
-  var preview = document.getElementById('scan-preview');
-  var spinner = document.getElementById('scan-spinner');
-  var label   = document.getElementById('scan-label');
-  var sub     = document.getElementById('scan-sub');
-
-  // Prévisualisation de l'image
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    preview.src = e.target.result;
-    preview.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-
-  overlay.classList.add('open');
-  spinner.style.display = 'block';
-  label.textContent = 'Analyse de la carte en cours…';
-  sub.textContent   = 'Chargement du moteur OCR';
-
-  function runOcr() {
-    sub.textContent = 'Reconnaissance du texte…';
-    Tesseract.recognize(file, 'fra+eng', {
-      logger: function(m) {
-        if (m.status === 'recognizing text') {
-          sub.textContent = 'Lecture : ' + Math.round(m.progress * 100) + '%';
-        }
-      }
-    }).then(function(result) {
-      overlay.classList.remove('open');
-      var parsed = parseCardText(result.data.text);
-      // Remplir le modal de confirmation
-      setScanField('sc-firstname', parsed.firstname);
-      setScanField('sc-lastname',  parsed.lastname);
-      setScanField('sc-email',     parsed.email);
-      setScanField('sc-phone',     parsed.phone);
-      setScanField('sc-company',   parsed.company);
-      setScanField('sc-role',      parsed.role);
-      // Afficher toutes les lignes propres comme chips cliquables
-      buildScanLines(parsed.allLines);
-      document.getElementById('scan-confirm').classList.add('open');
-    }).catch(function(err) {
-      spinner.style.display = 'none';
-      label.textContent = '❌ Échec de la lecture';
-      sub.textContent   = 'Veuillez réessayer avec une meilleure photo';
-      console.error(err);
-    });
-  }
-
-  if (window.Tesseract) {
-    runOcr();
-  } else {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    s.onload = runOcr;
-    s.onerror = function() {
-      label.textContent = '❌ Connexion requise';
-      sub.textContent   = 'Impossible de charger le moteur OCR';
-    };
-    document.head.appendChild(s);
-  }
-});
 
 function parseCardText(text) {
   var result = { firstname:'', lastname:'', email:'', phone:'', company:'', role:'' };
