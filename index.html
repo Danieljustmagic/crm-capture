@@ -1119,13 +1119,16 @@ function buildCalendarUrl(contact, days) {
 function buildWhatsApp(contact) {
   var withCard = getOpt(OPT_CARD);
   var msg =
-    'Bonjour ' + contact.prenom + ' !\n' +
-    'C\'est ' + AGENT.name + ' - ' + AGENT.company + '.\n' +
-    'Ravi d\'avoir echange avec vous !\n' +
-    AGENT.phone;
+    'Bonjour ' + contact.prenom + ' !\n\n' +
+    'Merci pour cet échange, ravi de vous avoir rencontré !\n\n';
   if (withCard) {
-    msg += '\n\n👉 Ma carte de visite : ' + CARD_URL;
+    msg += '👉 Ma carte de visite : ' + CARD_URL + '\n\n';
   }
+  msg +=
+    'Avec l\'envie de grandir ensemble,\n' +
+    AGENT.name + '\n' +
+    AGENT.company + '\n' +
+    AGENT.phone;
   // Normalisation numéro → format international (ex: 0612... → 33612...)
   var tel = contact.telephone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
   if (tel.startsWith('+')) tel = tel.slice(1);
