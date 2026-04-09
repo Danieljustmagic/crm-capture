@@ -250,6 +250,10 @@
     .pill.active {
       background: var(--coral); border-color: var(--coral); color: #fff;
     }
+    /* Multi-select activités — couleur teal pour différencier */
+    #activity-pills .pill.active {
+      background: var(--teal); border-color: var(--teal); color: #fff;
+    }
 
     /* ── SEND OPTIONS ───────────────────────────────────── */
     #send-options-card {
@@ -645,6 +649,16 @@
             </select>
           </div>
           <div class="field">
+            <label>Activité concernée <span style="font-weight:400;color:var(--muted);font-size:0.65rem;text-transform:none;letter-spacing:0">(choix multiple)</span></label>
+            <div class="pills" id="activity-pills">
+              <div class="pill" data-value="Immobilier">Immobilier</div>
+              <div class="pill" data-value="Coaching">Coaching</div>
+              <div class="pill" data-value="Enseignement">Enseignement</div>
+              <div class="pill" data-value="Apport d'affaire">Apport d'affaire</div>
+              <div class="pill" data-value="Autre">Autre</div>
+            </div>
+          </div>
+          <div class="field">
             <label for="f-notes">Notes</label>
             <textarea id="f-notes" placeholder="Besoins, projet, prochaine etape..."></textarea>
           </div>
@@ -878,13 +892,20 @@ document.querySelectorAll('.tab').forEach(function(tab) {
   });
 });
 
-// ── Pills ─────────────────────────────────────────────────────
+// ── Pills source (sélection unique) ──────────────────────────
 document.getElementById('source-pills').addEventListener('click', function(e) {
   var pill = e.target.closest('.pill');
   if (!pill) return;
-  document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+  this.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
   pill.classList.add('active');
   currentSource = pill.dataset.value;
+});
+
+// ── Pills activité (multi-select) ────────────────────────────
+document.getElementById('activity-pills').addEventListener('click', function(e) {
+  var pill = e.target.closest('.pill');
+  if (!pill) return;
+  pill.classList.toggle('active');
 });
 
 // ── Submit ─────────────────────────────────────────────────────
@@ -903,6 +924,7 @@ document.getElementById('btn-submit').addEventListener('click', function() {
     entreprise: document.getElementById('f-company').value.trim(),
     poste:      document.getElementById('f-role').value.trim(),
     source:     currentSource,
+    activites:  Array.from(document.querySelectorAll('#activity-pills .pill.active')).map(function(p) { return p.dataset.value; }).join(', '),
     priorite:   document.getElementById('f-priority').value,
     notes:      document.getElementById('f-notes').value.trim(),
     status:     'pending'
@@ -1153,8 +1175,9 @@ function resetForm() {
   document.getElementById('f-company').value = '';
   document.getElementById('f-role').value    = '';
   document.getElementById('f-notes').value   = '';
-  document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelector('.pill[data-value="Salon"]').classList.add('active');
+  document.querySelectorAll('#source-pills .pill').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelector('#source-pills .pill[data-value="Salon"]').classList.add('active');
+  document.querySelectorAll('#activity-pills .pill').forEach(function(p) { p.classList.remove('active'); });
   currentSource = 'Salon';
   document.getElementById('f-priority').value = 'Chaud';
 }
