@@ -396,6 +396,19 @@
       font-size: 1.1rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
+    .send-card-divider {
+      height: 1px; background: rgba(255,255,255,0.07);
+      margin: 16px 0;
+    }
+    .send-card-btn-wa {
+      width: 100%;
+      background: #25D366;
+      color: #fff; border: none; border-radius: 10px;
+      padding: 13px 20px;
+      font-size: 0.95rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; letter-spacing: 0.03em;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
 
     /* ── FOOTER ── */
     .footer-line {
@@ -515,7 +528,7 @@
     + Enregistrer dans mes contacts
   </button>
 
-  <!-- Envoi rapide SMS (mode ?send uniquement) -->
+  <!-- Envoi rapide SMS + WhatsApp (mode ?send uniquement) -->
   <div class="send-card-box" id="send-box" style="display:none">
     <div class="send-card-title">Envoyer ma carte par SMS</div>
     <div class="send-card-row">
@@ -523,6 +536,10 @@
              placeholder="06 00 00 00 00" inputmode="tel">
       <button class="send-card-btn" onclick="sendCardBySms()">➤</button>
     </div>
+    <div class="send-card-divider"></div>
+    <button class="send-card-btn-wa" onclick="sendCardByWhatsApp()">
+      <span>💬</span> Partager via WhatsApp
+    </button>
   </div>
 
   <a class="btn-site" href="https://www.novaleadership.fr" target="_blank">
@@ -541,6 +558,11 @@
 <script>
 var CARD_URL = 'https://contact.novaleadership.fr/card.html';
 var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+function sendCardByWhatsApp() {
+  var msg = 'Bonjour,\n\nRavi(e) d\'avoir fait votre connaissance ! Je vous transmets ma carte de visite, n\'hésitez pas à me contacter pour échanger.\n\n👉 ' + CARD_URL + '\n\nAvec l\'envie de grandir ensemble,\nDaniel Invernon\nCoach-partenaire · Nova Leadership';
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
 
 function sendCardBySms() {
   var input = document.getElementById('sms-number');

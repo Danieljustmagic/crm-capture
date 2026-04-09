@@ -270,6 +270,7 @@
     .icon-email { background: rgba(241,107,107,0.15); }
     .icon-sms   { background: rgba(91,160,155,0.15);  }
     .icon-card  { background: rgba(30,61,89,0.4);     }
+    .icon-wa    { background: rgba(37,211,102,0.15);  }
     .send-option-info { flex: 1; }
     .send-option-label {
       font-size: 0.8rem; font-weight: 700; color: var(--text);
@@ -383,6 +384,8 @@
     .btn-sms { background: var(--dark4); border-color: rgba(91,160,155,0.3); }
     .btn-sms .btn-action-icon   { background: rgba(91,160,155,0.15); }
     .btn-sms .btn-action-sub    { color: var(--muted); }
+    .btn-wa  { background: var(--dark4); border-color: rgba(37,211,102,0.3); }
+    .btn-wa  .btn-action-icon   { background: rgba(37,211,102,0.15); color: #25D366; }
     .btn-action.btn-auto { position: relative; overflow: hidden; }
     .btn-auto-badge {
       position: absolute; top: 8px; right: 10px;
@@ -526,6 +529,17 @@
       <span class="toggle-slider"></span>
     </label>
   </div>
+  <div class="settings-row">
+    <div class="send-option-icon icon-wa">💬</div>
+    <div class="settings-label">
+      WhatsApp automatique
+      <span class="settings-sub">Ouvre WhatsApp apres enregistrement</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="opt-wa">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
 </div>
 
 <main>
@@ -644,6 +658,17 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div class="send-option-row">
+          <div class="send-option-icon icon-wa">💬</div>
+          <div class="send-option-info">
+            <div class="send-option-label">WhatsApp</div>
+            <div class="send-option-sub">Ouvre WhatsApp avec message pre-rempli</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="form-opt-wa">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 
       <button id="btn-submit">
@@ -708,6 +733,7 @@ var URL_KEY      = 'crm_webapp_url';
 var OPT_EMAIL    = 'opt_email';
 var OPT_SMS      = 'opt_sms';
 var OPT_CARD     = 'opt_card';
+var OPT_WA       = 'opt_wa';
 var CARD_URL     = 'https://contact.novaleadership.fr/card.html';
 var currentSource = 'Salon';
 
@@ -727,9 +753,11 @@ updateConfigWarning();
 document.getElementById('opt-email').checked      = getOpt(OPT_EMAIL);
 document.getElementById('opt-card').checked       = getOpt(OPT_CARD);
 document.getElementById('opt-sms').checked        = getOpt(OPT_SMS);
+document.getElementById('opt-wa').checked         = getOpt(OPT_WA);
 document.getElementById('form-opt-email').checked = getOpt(OPT_EMAIL);
 document.getElementById('form-opt-sms').checked   = getOpt(OPT_SMS);
 document.getElementById('form-opt-card').checked  = getOpt(OPT_CARD);
+document.getElementById('form-opt-wa').checked    = getOpt(OPT_WA);
 
 // Save toggle changes (settings drawer)
 document.getElementById('opt-email').addEventListener('change', function() {
@@ -744,6 +772,10 @@ document.getElementById('opt-card').addEventListener('change', function() {
   setOpt(OPT_CARD, this.checked);
   document.getElementById('form-opt-card').checked = this.checked;
 });
+document.getElementById('opt-wa').addEventListener('change', function() {
+  setOpt(OPT_WA, this.checked);
+  document.getElementById('form-opt-wa').checked = this.checked;
+});
 // Save toggle changes (form)
 document.getElementById('form-opt-email').addEventListener('change', function() {
   setOpt(OPT_EMAIL, this.checked);
@@ -756,6 +788,10 @@ document.getElementById('form-opt-sms').addEventListener('change', function() {
 document.getElementById('form-opt-card').addEventListener('change', function() {
   setOpt(OPT_CARD, this.checked);
   document.getElementById('opt-card').checked = this.checked;
+});
+document.getElementById('form-opt-wa').addEventListener('change', function() {
+  setOpt(OPT_WA, this.checked);
+  document.getElementById('opt-wa').checked = this.checked;
 });
 
 // Config button
@@ -910,6 +946,24 @@ function showSuccessPanel(contact) {
     btns.appendChild(sBtn);
   }
 
+  // Build WhatsApp button
+  if (contact.telephone) {
+    var sendWa = getOpt(OPT_WA);
+    var waBtn = document.createElement('a');
+    waBtn.href = buildWhatsApp(contact);
+    waBtn.target = '_blank';
+    waBtn.id = 'action-wa-btn';
+    waBtn.className = 'btn-action btn-wa' + (sendWa ? ' btn-auto' : '');
+    waBtn.innerHTML =
+      '<div class="btn-action-icon">💬</div>' +
+      '<div class="btn-action-text">' +
+        '<span class="btn-action-label">Envoyer via WhatsApp</span>' +
+        '<span class="btn-action-sub">' + contact.telephone + '</span>' +
+      '</div>' +
+      (sendWa ? '<span class="btn-auto-badge">Auto</span>' : '');
+    btns.appendChild(waBtn);
+  }
+
   // Show action card only if there are buttons
   document.getElementById('action-card').style.display =
     (contact.email || contact.telephone) ? 'block' : 'none';
@@ -983,6 +1037,20 @@ function buildSms(contact) {
   // Numéro sans espaces pour l'URL
   var tel = contact.telephone.replace(/\s+/g, '');
   return 'sms:' + tel + sep + 'body=' + encodeURIComponent(msg);
+}
+
+function buildWhatsApp(contact) {
+  var withCard = getOpt(OPT_CARD);
+  var msg =
+    'Bonjour ' + contact.prenom + ' !\n' +
+    'C\'est ' + AGENT.name + ' - ' + AGENT.company + '.\n' +
+    'Ravi d\'avoir echange avec vous !\n' +
+    AGENT.phone;
+  if (withCard) {
+    msg += '\n\n👉 Ma carte de visite : ' + CARD_URL;
+  }
+  var tel = contact.telephone.replace(/\s+/g, '');
+  return 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg);
 }
 
 // ── New contact ───────────────────────────────────────────────
