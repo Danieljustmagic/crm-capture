@@ -400,6 +400,35 @@
       animation: pulse 1.5s ease-in-out infinite;
     }
     .btn-disabled { opacity: 0.3; pointer-events: none; }
+    /* ── RELANCE ────────────────────────────────────────── */
+    #relance-card {
+      background: var(--dark3); border: 1px solid rgba(91,160,155,0.25);
+      border-radius: var(--radius); padding: 18px;
+    }
+    .relance-title {
+      font-size: 0.6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.15em;
+      color: var(--teal); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .relance-title::before {
+      content: ''; width: 3px; height: 14px;
+      background: var(--teal); border-radius: 2px; flex-shrink: 0;
+    }
+    .relance-delays {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .btn-delay {
+      flex: 1; min-width: 52px;
+      background: var(--dark4); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 6px;
+      font-size: 0.75rem; font-weight: 800; color: var(--text);
+      cursor: pointer; font-family: inherit;
+      text-align: center; letter-spacing: 0.04em;
+      transition: all 0.15s;
+    }
+    .btn-delay:active { background: var(--teal); border-color: var(--teal); color: #fff; }
+
     #btn-new-contact {
       background: transparent; color: var(--text);
       font-size: 0.78rem; font-weight: 700;
@@ -691,6 +720,18 @@
         <div class="action-buttons" id="action-buttons"></div>
       </div>
 
+      <!-- Relance programmée -->
+      <div id="relance-card">
+        <div class="relance-title">📅 Programmer une relance</div>
+        <div class="relance-delays">
+          <button class="btn-delay" onclick="scheduleFollowUp(2)">+2j</button>
+          <button class="btn-delay" onclick="scheduleFollowUp(3)">+3j</button>
+          <button class="btn-delay" onclick="scheduleFollowUp(5)">+5j</button>
+          <button class="btn-delay" onclick="scheduleFollowUp(7)">+7j</button>
+          <button class="btn-delay" onclick="scheduleFollowUp(14)">+14j</button>
+        </div>
+      </div>
+
       <div id="qr-section">
         <div class="qr-title">Ma carte de visite</div>
         <div id="qr-canvas"></div>
@@ -898,6 +939,7 @@ function sendToSheet(contact) {
 
 // ── Success panel ─────────────────────────────────────────────
 function showSuccessPanel(contact) {
+  _lastContact = contact; // mémorise pour la relance calendrier
   document.getElementById('form-section').style.display = 'none';
   var panel = document.getElementById('success-panel');
   panel.style.display = 'flex';
@@ -1037,6 +1079,45 @@ function buildSms(contact) {
   // Numéro sans espaces pour l'URL
   var tel = contact.telephone.replace(/\s+/g, '');
   return 'sms:' + tel + sep + 'body=' + encodeURIComponent(msg);
+}
+
+// ── Relance Google Calendar ───────────────────────────────────
+var _lastContact = null; // contact courant pour la relance
+
+function scheduleFollowUp(days) {
+  if (!_lastContact) return;
+  var url = buildCalendarUrl(_lastContact, days);
+  window.open(url, '_blank');
+}
+
+function buildCalendarUrl(contact, days) {
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function fmtDate(d) {
+    return d.getFullYear() + '' + pad(d.getMonth()+1) + '' + pad(d.getDate());
+  }
+  var today  = new Date();
+  var target = new Date(today.getTime() + days * 86400000);
+  var startDate = fmtDate(target);
+  var endDate   = fmtDate(new Date(target.getTime() + 86400000));
+
+  var title = 'Relance — ' + contact.prenom + ' ' + contact.nom;
+  if (contact.entreprise) title += ' (' + contact.entreprise + ')';
+
+  var d = '';
+  d += '👤 ' + contact.prenom + ' ' + contact.nom + '\n';
+  if (contact.poste)      d += '💼 ' + contact.poste + '\n';
+  if (contact.entreprise) d += '🏢 ' + contact.entreprise + '\n';
+  if (contact.email)      d += '✉️  ' + contact.email + '\n';
+  if (contact.telephone)  d += '📱 ' + contact.telephone + '\n';
+  d += '⭐ Priorité : ' + (contact.priorite || '-') + '\n';
+  if (contact.notes)      d += '\n📝 Notes :\n' + contact.notes + '\n';
+  d += '\n📅 Rencontré(e) le ' + today.toLocaleDateString('fr-FR');
+  if (contact.source)     d += ' · ' + contact.source;
+
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text='    + encodeURIComponent(title) +
+    '&dates='   + startDate + '/' + endDate +
+    '&details=' + encodeURIComponent(d);
 }
 
 function buildWhatsApp(contact) {
