@@ -917,24 +917,21 @@ document.getElementById('btn-submit').addEventListener('click', function() {
 // ── Send to Google Sheets ─────────────────────────────────────
 function sendToSheet(contact) {
   var url = loadUrl();
-  var btn = document.getElementById('btn-submit');
-  btn.disabled = true;
-  btn.classList.add('loading');
 
-  function done(status) {
-    updateStatus(contact.id, status);
-    btn.disabled = false;
-    btn.classList.remove('loading');
-    showSuccessPanel(contact);
-  }
+  // Affiche le panneau de succès immédiatement, envoi en arrière-plan
+  showSuccessPanel(contact);
 
-  if (!url) { done('pending'); return; }
+  if (!url) return;
 
   fetch(url, {
     method: 'POST', mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(contact)
-  }).then(function() { done('sent'); }).catch(function() { done('error'); });
+  }).then(function() {
+    updateStatus(contact.id, 'sent');
+  }).catch(function() {
+    updateStatus(contact.id, 'error');
+  });
 }
 
 // ── Success panel ─────────────────────────────────────────────
@@ -993,7 +990,6 @@ function showSuccessPanel(contact) {
     var sendWa = getOpt(OPT_WA);
     var waBtn = document.createElement('a');
     waBtn.href = buildWhatsApp(contact);
-    waBtn.target = '_blank';
     waBtn.id = 'action-wa-btn';
     waBtn.className = 'btn-action btn-wa' + (sendWa ? ' btn-auto' : '');
     waBtn.innerHTML =
