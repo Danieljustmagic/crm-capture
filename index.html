@@ -499,6 +499,75 @@
       text-transform: uppercase; letter-spacing: 0.06em;
     }
 
+    /* ── SEARCH ─────────────────────────────────────────── */
+    .search-wrap {
+      position: relative; margin-bottom: 14px;
+    }
+    #search-input {
+      width: 100%; border: 1px solid var(--border);
+      border-radius: 14px; padding: 15px 54px 15px 18px;
+      font-size: 16px; font-family: inherit; font-weight: 500;
+      color: var(--text); background: var(--dark3);
+      outline: none; transition: all 0.15s;
+      appearance: none; -webkit-appearance: none;
+    }
+    #search-input::placeholder { color: rgba(240,244,255,0.25); }
+    #search-input:focus {
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px rgba(241,107,107,0.12);
+    }
+    #btn-search {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--coral); border: none; color: white;
+      font-size: 1rem; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .search-shortcuts {
+      display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px;
+    }
+    .search-shortcut {
+      padding: 7px 14px; border-radius: 99px;
+      border: 1px solid var(--border); background: var(--dark4);
+      color: var(--muted); font-size: 0.7rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      font-family: inherit;
+    }
+    .search-shortcut:active { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .search-info {
+      background: var(--dark3); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; text-align: center;
+    }
+    .search-info-icon { font-size: 2rem; margin-bottom: 10px; }
+    .search-info-title {
+      font-size: 0.82rem; font-weight: 800; color: var(--text);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+    }
+    .search-info-sub {
+      font-size: 0.72rem; color: var(--muted); line-height: 1.5;
+    }
+    .search-links {
+      display: flex; flex-direction: column; gap: 8px; margin-top: 20px;
+    }
+    .search-link-btn {
+      width: 100%; border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 16px;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; background: var(--dark3); color: var(--text);
+      font-family: inherit; transition: all 0.15s;
+    }
+    .search-link-btn:active { opacity: 0.8; }
+    .search-link-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .search-link-text { text-align: left; flex: 1; }
+    .search-link-label { display: block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .search-link-sub   { display: block; font-size: 0.66rem; color: var(--muted); margin-top: 2px; }
+
     /* ── INSTALL BANNER ─────────────────────────────────── */
     #install-banner {
       background: var(--dark3); border: 1px solid var(--border);
@@ -588,7 +657,11 @@
   <div class="tabs">
     <div class="tab active" data-tab="form">&#9998; Nouveau</div>
     <div class="tab" data-tab="history">&#9776; Historique</div>
+    <div class="tab" data-tab="search">&#128269; Drive</div>
   </div>
+  <style>
+    .tabs .tab { font-size: 0.65rem; padding: 10px 4px; }
+  </style>
 
   <!-- FORM TAB -->
   <div class="tab-pane active" id="tab-form">
@@ -770,6 +843,59 @@
     <button id="btn-retry">Renvoyer les contacts en attente</button>
   </div>
 
+  <!-- SEARCH TAB -->
+  <div class="tab-pane" id="tab-search">
+
+    <div class="section-label">Recherche dans Drive</div>
+
+    <div class="search-wrap">
+      <input id="search-input" type="text" placeholder="Nom, dossier, document…" autocomplete="off" spellcheck="false">
+      <button id="btn-search" onclick="driveSearch()">&#128269;</button>
+    </div>
+
+    <div class="search-shortcuts">
+      <button class="search-shortcut" onclick="driveSearchQuery('contrats')">Contrats</button>
+      <button class="search-shortcut" onclick="driveSearchQuery('factures')">Factures</button>
+      <button class="search-shortcut" onclick="driveSearchQuery('coaching')">Coaching</button>
+      <button class="search-shortcut" onclick="driveSearchQuery('formation')">Formation</button>
+      <button class="search-shortcut" onclick="driveSearchQuery('Nova Leadership')">Nova Leadership</button>
+    </div>
+
+    <div class="search-info">
+      <div class="search-info-icon">&#128194;</div>
+      <div class="search-info-title">Accès rapide à votre Drive</div>
+      <div class="search-info-sub">Tapez un nom de contact, un dossier ou un document — les résultats s'ouvrent directement dans Google Drive.</div>
+    </div>
+
+    <div class="search-links" style="margin-top:14px;">
+      <a class="search-link-btn" href="https://drive.google.com/drive/my-drive" target="_blank">
+        <div class="search-link-icon" style="background:rgba(66,133,244,0.15);">&#128194;</div>
+        <div class="search-link-text">
+          <span class="search-link-label">Mon Drive</span>
+          <span class="search-link-sub">Ouvrir la racine de votre Drive</span>
+        </div>
+        <span style="color:var(--muted);font-size:0.8rem;">→</span>
+      </a>
+      <a class="search-link-btn" href="https://drive.google.com/drive/shared-with-me" target="_blank">
+        <div class="search-link-icon" style="background:rgba(91,160,155,0.15);">&#128101;</div>
+        <div class="search-link-text">
+          <span class="search-link-label">Partagés avec moi</span>
+          <span class="search-link-sub">Documents partagés par l'équipe</span>
+        </div>
+        <span style="color:var(--muted);font-size:0.8rem;">→</span>
+      </a>
+      <a class="search-link-btn" href="https://drive.google.com/drive/recent" target="_blank">
+        <div class="search-link-icon" style="background:rgba(241,107,107,0.15);">&#128337;</div>
+        <div class="search-link-text">
+          <span class="search-link-label">Récents</span>
+          <span class="search-link-sub">Derniers fichiers consultés</span>
+        </div>
+        <span style="color:var(--muted);font-size:0.8rem;">→</span>
+      </a>
+    </div>
+
+  </div>
+
 </main>
 
 <div id="toast"></div>
@@ -890,7 +1016,22 @@ document.querySelectorAll('.tab').forEach(function(tab) {
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'history') renderHistory();
+    if (tab.dataset.tab === 'search') document.getElementById('search-input').focus();
   });
+});
+
+// ── Recherche Drive ──────────────────────────────────────────
+function driveSearch() {
+  var q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  window.open('https://drive.google.com/drive/search?q=' + encodeURIComponent(q), '_blank');
+}
+function driveSearchQuery(q) {
+  document.getElementById('search-input').value = q;
+  window.open('https://drive.google.com/drive/search?q=' + encodeURIComponent(q), '_blank');
+}
+document.getElementById('search-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') driveSearch();
 });
 
 // ── Pills source (sélection unique) ──────────────────────────
