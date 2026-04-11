@@ -61,14 +61,14 @@
     }
     .logo {
       width: 38px; height: 38px;
+      background: linear-gradient(-45deg, var(--coral), var(--navy), var(--teal));
+      background-size: 300% 300%;
+      animation: gradientShift 6s ease infinite;
       border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(241,107,107,0.3);
-    }
-    .logo img {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
+      font-weight: 800; font-size: 0.8rem;
+      color: white; letter-spacing: 0.5px;
     }
     .header-text { flex: 1; }
     header h1 {
@@ -516,7 +516,7 @@
 <body>
 
 <header>
-  <div class="logo"><img src="icon-192.png" alt="Nova Leadership"></div>
+  <div class="logo">NV</div>
   <div class="header-text">
     <h1>Nova Leadership</h1>
     <p>Capture de contact</p>
